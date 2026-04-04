@@ -102,6 +102,7 @@ void lilac_reset_client(int client)
 	playerinfo_time_teleported[client] = 0.0;
 	playerinfo_time_aimlock[client] = 0.0;
 	playerinfo_time_process_aimlock[client] = 0.0;
+	Format(playerinfo_detected[client], sizeof(playerinfo_detected[]), "");
 
 	for (int i = 0; i < CHEAT_MAX; i++) {
 		playerinfo_time_forward[client][i] = 0.0;
@@ -233,7 +234,6 @@ void lilac_ban_client(int client, int cheat)
 	case CHEAT_NOLERP: { log_only = icvar[CVAR_NOLERP] < 0; }
 	case CHEAT_BHOP: { log_only = icvar[CVAR_BHOP] < 0; }
 	/* Aimbot and Aimlock have their own dedicated log-only mode. */
-	case CHEAT_ANTI_DUCK_DELAY: { log_only = icvar[CVAR_ANTI_DUCK_DELAY] < 0; }
 	case CHEAT_NOISEMAKER_SPAM: { log_only = icvar[CVAR_NOISEMAKER_SPAM] < 0; }
 	case CHEAT_MACRO: { log_only = icvar[CVAR_MACRO] < 0; }
 	case CHEAT_NEWLINE_NAME: { log_only = icvar[CVAR_FILTER_NAME] < 0; }
@@ -260,8 +260,6 @@ void lilac_ban_client(int client, int cheat)
 		"[Little Anti-Cheat %s] %T", PLUGIN_VERSION, "ban_aimbot", lang); }
 	case CHEAT_AIMLOCK: { Format(reason, sizeof(reason),
 		"[Little Anti-Cheat %s] %T", PLUGIN_VERSION, "ban_aimlock", lang); }
-	case CHEAT_ANTI_DUCK_DELAY: { Format(reason, sizeof(reason),
-		"[Little Anti-Cheat %s] %T", PLUGIN_VERSION, "ban_anti_duck_delay", lang); }
 	case CHEAT_NOISEMAKER_SPAM: { Format(reason, sizeof(reason),
 		"[Little Anti-Cheat %s] %T", PLUGIN_VERSION, "ban_noisemaker", lang); }
 	case CHEAT_MACRO: { Format(reason, sizeof(reason),
@@ -273,18 +271,19 @@ void lilac_ban_client(int client, int cheat)
 
 	lilac_forward_client_ban(client, cheat);
 
-
-	/* Try to ban with MateralAdmin first,
-	 * if that fails, proceed to SourceBans, then SourceBans++,
-	 * And lastly, BaseBans. */
-
+	if (icvar[CVAR_BANSYSTEM] && NATIVE_EXISTS("BSAccess_AddBanByAccountId")) {
+		int accountid = GetSteamAccountID(client);
+		if (accountid > 0 && BSAccess_AddBanByAccountId(0, accountid, get_ban_length(cheat), reason, "")) {
+			CreateTimer(5.0, timer_kick, GetClientUserId(client));
+			return;
+		}
+	}
 
 	if (icvar[CVAR_MA] && NATIVE_EXISTS("MABanPlayer")) {
 		MABanPlayer(0, client, MA_BAN_STEAM, get_ban_length(cheat), reason);
 		CreateTimer(5.0, timer_kick, GetClientUserId(client));
 		return;
 	}
-
 
 	if (icvar[CVAR_SB]) {
 		if (NATIVE_EXISTS("SBPP_BanPlayer")) {
@@ -310,7 +309,7 @@ public Action timer_kick(Handle timer, int userid)
 
 	if (is_player_valid(client))
 		KickClient(client, "%T", "kick_ban_generic", client);
-		
+
 	return Plugin_Continue;
 }
 
@@ -431,6 +430,11 @@ bool is_player_valid(int client)
 		&& !IsClientSourceTV(client));
 }
 
+void lilac_save_player_details(int client, const char[] details)
+{
+	Format(playerinfo_detected[client], sizeof(playerinfo_detected[]), "%s", details);
+}
+
 void lilac_forward_client_cheat(int client, int cheat)
 {
 	int dummy;
@@ -473,4 +477,20 @@ bool lilac_forward_allow_cheat_detection(int client, int cheat)
 		return true;
 
 	return false;
+}
+
+public int lilac_native_get_detected_infos(Handle hPlugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	if (!is_player_valid(client))
+		return -1;
+
+	if (!playerinfo_detected[client][0])
+		return -1;
+
+	int maxlen = GetNativeCell(3);
+	if (SetNativeString(2, playerinfo_detected[client], maxlen) == SP_ERROR_NONE)
+		return 1;
+
+	return -1;
 }

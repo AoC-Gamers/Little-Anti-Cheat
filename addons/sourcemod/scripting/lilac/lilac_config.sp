@@ -32,6 +32,9 @@ void lilac_config_setup()
 	hcvar[CVAR_MA] = new Convar("lilac_materialadmin", "1",
 		"Ban players via Material-Admin (Fork of Sourcebans++. If it isn't installed, will default to sourcebans++ or basebans).",
 		FCVAR_PROTECTED, true, 0.0, true, 1.0);
+	hcvar[CVAR_BANSYSTEM] = new Convar("lilac_bansystem", "1",
+		"Ban players via BanSystem (If it isn't installed, it will default to basebans).",
+		FCVAR_PROTECTED, true, 0.0, true, 1.0);
 	hcvar[CVAR_SOURCEIRC] = new Convar("lilac_sourceirc", "1",
 		"Enable reflecting log messages to SourceIRC channels flagged with 'lilac', if SourceIRC is available.",
 		FCVAR_PROTECTED, true, 0.0, true, 1.0);
@@ -89,9 +92,6 @@ void lilac_config_setup()
 	hcvar[CVAR_AIMLOCK_LIGHT] = new Convar("lilac_aimlock_light", "1",
 		"Only process at most 5 suspicious players for aimlock.\nDO NOT DISABLE THIS UNLESS YOUR SERVER CAN HANDLE IT!",
 		FCVAR_PROTECTED, true, 0.0, true, 1.0);
-	hcvar[CVAR_ANTI_DUCK_DELAY] = new Convar("lilac_anti_duck_delay", "1",
-		"CS:GO Only, detect Anti-Duck-Delay/FastDuck.\n-1 = Log only.\n0 = Disabled.\n1 = Enabled.",
-		FCVAR_PROTECTED, true, -1.0, true, 1.0);
 	hcvar[CVAR_NOISEMAKER_SPAM] = new Convar("lilac_noisemaker", "1",
 		"TF2 Only, detect infinite noisemaker spam. STILL IN BETA, DOES NOT BAN, ONLY LOGS! MAY HAVE SOME ISSUES!\n-1 = Log only.\n0 = Disabled.\n1 = Enabled.",
 		FCVAR_PROTECTED, true, -1.0, true, 1.0);
@@ -364,6 +364,11 @@ public Action lilac_ban_status(int args)
 	PrintToServer("\tNative Exists: %s", ((NATIVE_EXISTS("SBBanPlayer")) ? "Yes" : "No"));
 	PrintToServer("\tConVar: lilac_sourcebans = %d", icvar[CVAR_SB]);
 
+	PrintToServer("BanSystem:");
+	PrintToServer("\tLoaded: %s", ((bansystem_exist) ? "Yes" : "No"));
+	PrintToServer("\tNative Exists: %s", ((NATIVE_EXISTS("BSAccess_AddBanByAccountId")) ? "Yes" : "No"));
+	PrintToServer("\tConVar: lilac_bansystem = %d", icvar[CVAR_BANSYSTEM]);
+
 	PrintToServer("SourceIRC:");
 	PrintToServer("\tNative Exists: %s", ((NATIVE_EXISTS("IRC_MsgFlaggedChannels")) ? "Yes" : "No"));
 	PrintToServer("\tConVar: lilac_sourceirc = %d", icvar[CVAR_SOURCEIRC]);
@@ -371,16 +376,20 @@ public Action lilac_ban_status(int args)
 		IRC_MsgFlaggedChannels("lilac", "[LILAC] is active and logging to SourceIRC!");
 
 	ban_type = ((icvar[CVAR_MA] && NATIVE_EXISTS("MABanPlayer")) ? 3 : 0);
+
 	if (!ban_type)
 		ban_type = ((icvar[CVAR_SB] && NATIVE_EXISTS("SBPP_BanPlayer")) ? 2 : 0);
 	if (!ban_type)
 		ban_type = (icvar[CVAR_SB] && NATIVE_EXISTS("SBBanPlayer"));
+	if (!ban_type)
+		ban_type = ((icvar[CVAR_BANSYSTEM] && NATIVE_EXISTS("BSAccess_AddBanByAccountId")) ? 4 : 0);
 
 	switch (ban_type) {
 	case 0: { strcopy(tmp, sizeof(tmp), "BaseBans"); }
 	case 1: { strcopy(tmp, sizeof(tmp), "SourceBans (Old)"); }
 	case 2: { strcopy(tmp, sizeof(tmp), "SourceBans++"); }
 	case 3: { strcopy(tmp, sizeof(tmp), "Material-Admin"); }
+	case 4: { strcopy(tmp, sizeof(tmp), "BanSystem"); }
 	default: return Plugin_Handled;
 	}
 
@@ -407,7 +416,6 @@ public Action lilac_set_ban_length(int args)
 		PrintToServer("\tlilac_set_ban_length bhop <minutes>");
 		PrintToServer("\tlilac_set_ban_length aimbot <minutes>");
 		PrintToServer("\tlilac_set_ban_length aimlock <minutes>");
-		PrintToServer("\tlilac_set_ban_length antiduckdelay <minutes>");
 		PrintToServer("\tlilac_set_ban_length noisemaker <minutes>");
 		PrintToServer("\tlilac_set_ban_length macro <minutes>");
 		PrintToServer("\tlilac_set_ban_length name <minutes>\n");
@@ -437,12 +445,6 @@ public Action lilac_set_ban_length(int args)
 	}
 	else if (StrEqual(feature, "aimlock", false) || StrEqual(feature, "lock", false)) {
 		index = CHEAT_AIMLOCK;
-	}
-	/* ( @~@) Bruh.... This is... B R U H */
-	else if (StrEqual(feature, "duck", false) || StrEqual(feature, "crouch", false)
-		|| StrEqual(feature, "antiduck", false) || StrEqual(feature, "antiduckdelay", false)
-		|| StrEqual(feature, "fastduck", false)) {
-		index = CHEAT_ANTI_DUCK_DELAY;
 	}
 	else if (StrEqual(feature, "noisemaker", false) || StrEqual(feature, "noise", false)) {
 		index = CHEAT_NOISEMAKER_SPAM;
@@ -597,9 +599,6 @@ public void cvar_change(ConVar convar, const char[] oldValue, const char[] newVa
 	}
 	else if (convar == hcvar[CVAR_AIMLOCK_LIGHT]) {
 		icvar[CVAR_AIMLOCK_LIGHT] = StringToInt(newValue, 10);
-	}
-	else if (convar == hcvar[CVAR_ANTI_DUCK_DELAY]) {
-		icvar[CVAR_ANTI_DUCK_DELAY] = StringToInt(newValue, 10);
 	}
 	else if (convar == hcvar[CVAR_NOISEMAKER_SPAM]) {
 		icvar[CVAR_NOISEMAKER_SPAM] = StringToInt(newValue, 10);
