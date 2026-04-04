@@ -29,6 +29,7 @@
 #include <sdktools_entoutput>
 #include <convar_class>
 #include <lilac>
+
 #undef REQUIRE_PLUGIN /* ... */
 #undef REQUIRE_EXTENSIONS
 #if defined TF2C
@@ -184,9 +185,6 @@ public void OnAllPluginsLoaded()
 	materialadmin_exist = LibraryExists("materialadmin");
 	bansystem_exist = LibraryExists("bansystem_access");
 
-	if (LibraryExists("updater"))
-		lilac_update_url();
-
 	/* Startup message. */
 	PrintToServer("[Little Anti-Cheat %s] Successfully loaded!", PLUGIN_VERSION);
 }
@@ -202,8 +200,6 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int err_
 	MarkNativeAsOptional("SBPP_BanPlayer");
 	MarkNativeAsOptional("MABanPlayer");
 	MarkNativeAsOptional("BSAccess_AddBanByAccountId");
-	MarkNativeAsOptional("Updater_AddPlugin");
-	MarkNativeAsOptional("Updater_RemovePlugin");
 	MarkNativeAsOptional("IRC_MsgFlaggedChannels");
 
 	/* Build the log path for the file in case the user has overridden sm_basepath. */
@@ -221,8 +217,6 @@ public void OnLibraryAdded(const char []name)
 		materialadmin_exist = true;
 	else if (StrEqual(name, "bansystem_access"))
 		bansystem_exist = true;
-	else if (StrEqual(name, "updater"))
-		lilac_update_url();
 }
 
 public void OnLibraryRemoved(const char []name)
@@ -235,26 +229,6 @@ public void OnLibraryRemoved(const char []name)
 		materialadmin_exist = false;
 	else if (StrEqual(name, "bansystem_access"))
 		bansystem_exist = false;
-}
-
-void lilac_update_url()
-{
-	if (icvar[CVAR_AUTO_UPDATE]) {
-		if (!NATIVE_EXISTS("Updater_AddPlugin")) {
-			PrintToServer("Error: Native Updater_AddPlugin() not found! Check if updater plugin is installed.");
-			return;
-		}
-
-		Updater_AddPlugin(UPDATE_URL);
-	}
-	else {
-		if (!NATIVE_EXISTS("Updater_RemovePlugin")) {
-			PrintToServer("Error: Native Updater_RemovePlugin() not found! Check if updater plugin is installed.");
-			return;
-		}
-
-		Updater_RemovePlugin();
-	}
 }
 
 public void OnClientPutInServer(int client)

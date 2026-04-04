@@ -17,6 +17,10 @@
 - Validación automática del artefacto para asegurar que incluya el binario, el include público y las traducciones necesarias.
 - Empaquetado automático de releases en `.zip` siguiendo el layout estándar del ecosistema AoC.
 - Normalización del proyecto para trabajar con la misma estructura usada en otros repositorios públicos del ecosistema.
+- Corrección del guard de aimbot para evitar comprobaciones duplicadas por tick sobre el atacante.
+- Corrección de las consultas `QueryClientConVar` para asociar las respuestas al `userid` correcto y evitar aplicar resultados a un slot reciclado.
+- Eliminación completa del soporte a auto update mediante Updater.
+- Aclaración de que los cambios de configuración de base de datos requieren recarga del plugin o cambio de mapa para aplicarse.
 
 ## 1.7.4
 

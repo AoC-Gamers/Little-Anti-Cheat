@@ -17,7 +17,6 @@
 */
 
 #define NATIVE_EXISTS(%0)   (GetFeatureStatus(FeatureType_Native, %0) == FeatureStatus_Available)
-#define UPDATE_URL          "https://raw.githubusercontent.com/J-Tanzanite/Little-Anti-Cheat/master/updatefile.txt"
 
 #define CMD_LENGTH   330
 
@@ -64,11 +63,10 @@
 #define CVAR_FILTER_NAME           32
 #define CVAR_FILTER_CHAT           33
 #define CVAR_LOSS_FIX              34
-#define CVAR_AUTO_UPDATE           35
-#define CVAR_SOURCEIRC             36
-#define CVAR_DATABASE              37
-#define CVAR_BANSYSTEM             38
-#define CVAR_MAX                   39
+#define CVAR_SOURCEIRC             35
+#define CVAR_DATABASE              36
+#define CVAR_BANSYSTEM             37
+#define CVAR_MAX                   38
 
 #define BHOP_INDEX_MIN     0
 #define BHOP_INDEX_JUMP    1
@@ -188,5 +186,3 @@ native Function MABanPlayer(int iClient, int iTarget, int iType, int iTime, char
 native Function SBBanPlayer(int client, int target, int time, const char[] reason);
 native Function SBPP_BanPlayer(int iAdmin, int iTarget, int iTime, const char[] sReason);
 native Function BSAccess_AddBanByAccountId(int iAdmin, int iAccountId, int iLength = 0, const char[] szReason = "", const char[] szContext = "");
-native Function Updater_AddPlugin(const char[] url);
-native Function Updater_RemovePlugin();

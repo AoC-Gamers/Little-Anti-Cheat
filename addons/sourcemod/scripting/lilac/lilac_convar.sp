@@ -69,7 +69,7 @@ public Action timer_query(Handle timer)
 				query_index[i] = 0;
 		}
 
-		QueryClientConVar(i, query_list[query_index[i]], query_reply, 0);
+		QueryClientConVar(i, query_list[query_index[i]], query_reply, GetClientUserId(i));
 
 		if (++query_failed[i] > QUERY_MAX_FAILURES) {
 			if (icvar[CVAR_LOG_MISC]) {
@@ -96,6 +96,12 @@ public Action timer_query(Handle timer)
 public void query_reply(QueryCookie cookie, int client, ConVarQueryResult result,
 			const char[] cvarName, const char[] cvarValue, any value)
 {
+	int userid = value;
+	client = GetClientOfUserId(userid);
+
+	if (!is_player_valid(client) || IsFakeClient(client))
+		return;
+
 	/* Player NEEDS to answer the query. */
 	if (result != ConVarQuery_Okay)
 		return;

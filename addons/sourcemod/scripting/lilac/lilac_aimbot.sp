@@ -36,6 +36,7 @@ public Action event_player_death(Event event, const char[] name, bool dontBroadc
 {
 	char wep[64];
 	int attackerid;
+	int attacker;
 	int victimid;
 	int client;
 	
@@ -43,6 +44,7 @@ public Action event_player_death(Event event, const char[] name, bool dontBroadc
 		return Plugin_Continue;
 	
 	attackerid = GetEventInt(event, "attacker", -1);
+	attacker = GetClientOfUserId(attackerid);
 	victimid = GetEventInt(event, "userid", -1);
 	client = GetClientOfUserId(victimid);
 	
@@ -52,7 +54,7 @@ public Action event_player_death(Event event, const char[] name, bool dontBroadc
 	/* This prevents running multiple aimbot checks on the same tick.
 	 * This can happen with explosives, like some projectiles.
 	 * This variable gets set in the "shared event" function. */
-	if (aimbot_timertick[client] == GetGameTickCount())
+	if (aimbot_timertick[attacker] == GetGameTickCount())
 		return Plugin_Continue;
 
 	/* Ignore kills performed with grenades. */
@@ -61,7 +63,7 @@ public Action event_player_death(Event event, const char[] name, bool dontBroadc
 		return Plugin_Continue;
 	
 	event_death_shared(attackerid,
-		GetClientOfUserId(attackerid),
+		attacker,
 		client, false);
 	
 	return Plugin_Continue;
@@ -76,13 +78,15 @@ public Action event_player_death_tf2(Event event, const char[] name, bool dontBr
 		return Plugin_Continue;
 
 
+	userid = GetEventInt(event, "attacker", -1);
+	client = GetClientOfUserId(userid);
 	victim = GetClientOfUserId(GetEventInt(event, "userid", -1));
 
 	if (!is_player_valid(victim))
 		return Plugin_Continue;
 	
 	/* Same as above, prevent multiple aimbot checks on the same tick. */
-	if (aimbot_timertick[victim] == GetGameTickCount())
+	if (aimbot_timertick[client] == GetGameTickCount())
 		return Plugin_Continue;
 
 	GetEventString(event, "weapon_logclassname", wep, sizeof(wep), "");
@@ -91,8 +95,6 @@ public Action event_player_death_tf2(Event event, const char[] name, bool dontBr
 	if (!strncmp(wep, "obj_", 4, false) || !strncmp(wep, "world", 5, false))
 		return Plugin_Continue;
 
-	userid = GetEventInt(event, "attacker", -1);
-	client = GetClientOfUserId(userid);
 	killtype = GetEventInt(event, "customkill", 0);
 
 	/* killtype 3 == flamethrower,

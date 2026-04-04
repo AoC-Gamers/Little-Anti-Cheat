@@ -131,11 +131,8 @@ void lilac_config_setup()
 	hcvar[CVAR_LOSS_FIX] = new Convar("lilac_loss_fix", "1",
 		"Ignore some cheat detections for players who have too much packet loss (bad connection to the server).",
 		FCVAR_PROTECTED, true, 0.0, true, 1.0);
-	hcvar[CVAR_AUTO_UPDATE] = new Convar("lilac_auto_update", "0",
-		"Automatically update Little Anti-Cheat.",
-		FCVAR_PROTECTED, true, 0.0, true, 1.0);
 	hcvar[CVAR_DATABASE] = new Convar("lilac_database", "",
-		"Database to log detections to.\nempty = don't log to database\ndatabase name = log to this database (MySQL & SQLite supported)",
+		"Database to log detections to.\nempty = don't log to database\ndatabase name = log to this database (MySQL & SQLite supported)\nRequires plugin reload or map change to apply.",
 		FCVAR_PROTECTED);
 
 	for (int i = 0; i < CVAR_MAX; i++) {
@@ -652,13 +649,13 @@ public void cvar_change(ConVar convar, const char[] oldValue, const char[] newVa
 	else if (convar == hcvar[CVAR_LOSS_FIX]) {
 		icvar[CVAR_LOSS_FIX] = StringToInt(newValue, 10);
 	}
-	else if (convar == hcvar[CVAR_AUTO_UPDATE]) {
-		icvar[CVAR_AUTO_UPDATE] = StringToInt(newValue, 10);
-		
-		lilac_update_url();
-	}
 	else if (convar == hcvar[CVAR_DATABASE]) {
 		strcopy(db_name, sizeof(db_name), newValue);
+
+		if (strcmp(oldValue, newValue) != 0) {
+			PrintToServer("[Little Anti-Cheat %s] NOTICE: Database setting changes require plugin reload or map change to take effect.",
+				PLUGIN_VERSION);
+		}
 	}
 	else {
 		convar.GetName(cvarname, sizeof(cvarname));
