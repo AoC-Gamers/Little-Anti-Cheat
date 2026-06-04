@@ -1,0 +1,31 @@
+{
+  "build": {
+    "plugins": {
+      "root": [
+        "lilac"
+      ]
+    }
+  },
+  "artifact": {
+    "addons": {
+      "sourcemod": {
+        "scripting": {
+          "files": [
+            "lilac.sp"
+          ],
+          "dirs": [
+            "lilac"
+          ],
+          "include": {
+            "files": [
+              "lilac.inc"
+            ]
+          }
+        },
+        "translations": {
+          "all": true
+        }
+      }
+    }
+  }
+}

@@ -32,6 +32,17 @@ Esto permite:
 
 La CI genera artefactos listos para instalación con el plugin compilado, su include público y las traducciones necesarias para runtime.
 
+## Build local
+
+```bash
+make deps-smx
+make build-smx
+make package-smx
+make release
+```
+
+El contenido publicado se describe en [plugin-package-map.json](C:\GitHub\Little-Anti-Cheat\plugin-package-map.json) y el flujo completo está documentado en [docs/BUILD_SYSTEM.md](C:\GitHub\Little-Anti-Cheat\docs\BUILD_SYSTEM.md).
+
 ## Créditos
 
 - Proyecto original: **Little Anti-Cheat**
