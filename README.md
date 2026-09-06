@@ -32,6 +32,10 @@ Esto permite:
 
 La CI genera artefactos listos para instalación con el plugin compilado, su include público y las traducciones necesarias para runtime.
 
+Los pushes a `develop` actualizan `channel/develop` y los pushes a `main`
+actualizan `channel/latest`. Las releases `vX.Y.Z` permanecen separadas de
+estos canales móviles.
+
 ## Build local
 
 ```bash

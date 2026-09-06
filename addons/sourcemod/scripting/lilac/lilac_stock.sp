@@ -273,7 +273,7 @@ void lilac_ban_client(int client, int cheat)
 
 	if (icvar[CVAR_BANSYSTEM] && NATIVE_EXISTS("BSAccess_AddBanByAccountId")) {
 		int accountid = GetSteamAccountID(client);
-		if (accountid > 0 && BSAccess_AddBanByAccountId(0, accountid, get_ban_length(cheat), reason, "")) {
+		if (accountid > 0 && BSAccess_AddBanByAccountId(0, accountid, get_ban_length(cheat), reason, "", BANSYSTEM_CONSOLE_NAME)) {
 			CreateTimer(5.0, timer_kick, GetClientUserId(client));
 			return;
 		}

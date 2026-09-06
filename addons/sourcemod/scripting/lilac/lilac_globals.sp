@@ -118,7 +118,8 @@
 #define PLUGIN_NAME      "[Lilac] Little Anti-Cheat"
 #define PLUGIN_AUTHOR    "J_Tanzanite"
 #define PLUGIN_DESC      "An opensource Anti-Cheat"
-#define PLUGIN_VERSION   "1.8.0"
+#define PLUGIN_VERSION   "1.8.1"
+#define BANSYSTEM_CONSOLE_NAME "Lilac Anti-Cheat"
 #define PLUGIN_URL       "https://github.com/J-Tanzanite/Little-Anti-Cheat"
 
 /* Convars. */
@@ -185,4 +186,4 @@ native Function IRC_MsgFlaggedChannels(const char[] flag, const char[] format, a
 native Function MABanPlayer(int iClient, int iTarget, int iType, int iTime, char[] sReason);
 native Function SBBanPlayer(int client, int target, int time, const char[] reason);
 native Function SBPP_BanPlayer(int iAdmin, int iTarget, int iTime, const char[] sReason);
-native Function BSAccess_AddBanByAccountId(int iAdmin, int iAccountId, int iLength = 0, const char[] szReason = "", const char[] szContext = "");
+native bool BSAccess_AddBanByAccountId(int iAdmin, int iAccountId, int iLength = 0, const char[] szReason = "", const char[] szContext = "", const char[] consoleName = "");
