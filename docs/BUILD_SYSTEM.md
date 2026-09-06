@@ -31,6 +31,18 @@ La CI usa el mismo camino local:
 
 1. `deps-smx`
 2. `build-smx`
-3. `release`
+3. `package`
 
-El job `release` reusa el output compilado, genera el artifact final y lo valida antes de publicarlo.
+El job `package` reutiliza el output compilado, genera el artefacto final y lo
+valida antes de publicarlo. Cada ejecución conserva un ZIP identificado por el
+SHA completo del commit. En eventos `push`, las ramas mantienen además los
+canales móviles consumidos por el instalador:
+
+- `develop` publica `little-anti-cheat-develop.zip` en `channel/develop`.
+- `main` publica `little-anti-cheat-latest.zip` en `channel/latest`.
+
+El asset se publica antes de avanzar la etiqueta del canal, evitando que una
+falla de subida deje la etiqueta apuntando a un commit sin ZIP utilizable. Los
+pull requests y ejecuciones manuales validan y conservan su artefacto, pero no
+modifican los canales móviles. Las versiones semánticas `vX.Y.Z` continúan en
+el workflow de release independiente.

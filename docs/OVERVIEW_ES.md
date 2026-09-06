@@ -33,6 +33,18 @@ Originalmente fue desarrollado para servidores privados. Más adelante fue publi
 - Filtro de caracteres inválidos en chat.
   - Incluye correcciones para abusos relacionados con limpieza de chat.
 
+## Integración con BanSystem
+
+Cuando `lilac_bansystem` está habilitado y la native
+`BSAccess_AddBanByAccountId` está disponible, Lilac solicita la sanción con
+administrador `0` y el emisor explícito `Lilac Anti-Cheat`. BanSystem puede así
+distinguir una detección automática de una orden escrita directamente en la
+terminal, cuyo emisor por defecto es `Console`.
+
+El nombre del emisor es información de trazabilidad; no concede permisos ni
+reemplaza las validaciones de BanSystem. Si la solicitud no es aceptada, Lilac
+conserva su cadena de fallback hacia los demás proveedores configurados.
+
 ## Juegos compatibles
 
 - `[TF2]` Team Fortress 2

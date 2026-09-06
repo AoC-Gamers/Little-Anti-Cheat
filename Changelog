@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.1
+
+- Identificación explícita de `Lilac Anti-Cheat` como emisor de consola al crear sanciones de acceso mediante BanSystem.
+- Conservación del fallback existente hacia Material-Admin, SourceBans y BaseBans cuando BanSystem no acepta la solicitud.
+- Homologación del canal continuo: `develop` publica `channel/develop` y `main` publica `channel/latest`, manteniendo los artefactos de cada ejecución identificados por el SHA completo.
+
 ## 1.8.0
 
 - Reorganización del repositorio al layout estándar:
