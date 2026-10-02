@@ -116,6 +116,226 @@ void lilac_reset_client(int client)
 
 		set_player_log_angles(client, view_as<float>({0.0, 0.0, 0.0}), i);
 	}
+
+}
+
+void lilac_aim_tracking_start(int client, int cheat)
+{
+	if (client < 1 || client > MaxClients
+		|| (cheat != CHEAT_AIMBOT && cheat != CHEAT_AIMLOCK))
+		return;
+
+	if (!is_player_valid(client) || IsFakeClient(client))
+		return;
+
+	int accountId = GetSteamAccountID(client);
+	char steamId64[32];
+	if (accountId <= 0 || !GetClientAuthId(client, AuthId_SteamID64, steamId64, sizeof(steamId64), true))
+		return;
+
+	int recordIndex = lilac_aim_suspicion_find_record(accountId, cheat);
+	if (recordIndex == -1)
+		return;
+	AimSuspicionRecord record;
+	aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+	if (record.tracking || record.detections < 2)
+		return;
+
+	record.tracking = true;
+	record.lastClient = client;
+	aim_suspicion_accountid[client] = accountId;
+	strcopy(record.steamId64, sizeof(record.steamId64), steamId64);
+	if (!lilac_generate_incident_id(record.incidentId, sizeof(record.incidentId)))
+		record.incidentId[0] = '\0';
+	aim_suspicion_records.SetArray(recordIndex, record, sizeof(record));
+
+	int dummy;
+	if (forwardhandleaimtrackingstarted != null) {
+		Call_StartForward(forwardhandleaimtrackingstarted);
+		Call_PushCell(client);
+		Call_PushCell(cheat);
+		Call_PushCell(accountId);
+		Call_PushString(steamId64);
+		Call_Finish(dummy);
+	}
+	if (forwardhandleaimtrackingincidentstarted != null) {
+		Call_StartForward(forwardhandleaimtrackingincidentstarted);
+		Call_PushCell(client);
+		Call_PushCell(cheat);
+		Call_PushCell(accountId);
+		Call_PushString(steamId64);
+		Call_PushString(record.incidentId);
+		Call_Finish(dummy);
+	}
+}
+
+void lilac_aim_tracking_end_record(int recordIndex, LilacAimTrackingEndReason reason, int eventClient)
+{
+	AimSuspicionRecord record;
+	aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+	if (!record.tracking)
+		return;
+
+	if (eventClient < 1 || eventClient > MaxClients || !is_player_valid(eventClient)
+		|| GetSteamAccountID(eventClient) != record.accountId)
+		eventClient = 0;
+	char steamId64[32];
+	strcopy(steamId64, sizeof(steamId64), record.steamId64);
+	record.tracking = false;
+	aim_suspicion_records.SetArray(recordIndex, record, sizeof(record));
+
+	if (forwardhandleaimtrackingended == null)
+		return;
+
+	Call_StartForward(forwardhandleaimtrackingended);
+	Call_PushCell(eventClient);
+	Call_PushCell(record.cheat);
+	Call_PushCell(record.accountId);
+	Call_PushString(steamId64);
+	Call_PushCell(reason);
+	int dummy;
+	Call_Finish(dummy);
+}
+
+int lilac_aim_suspicion_find_record(int accountId, int cheat)
+{
+	if (accountId <= 0 || aim_suspicion_records == null)
+		return -1;
+
+	AimSuspicionRecord record;
+	for (int i = 0; i < aim_suspicion_records.Length; i++) {
+		aim_suspicion_records.GetArray(i, record, sizeof(record));
+		if (record.accountId == accountId && record.cheat == cheat)
+			return i;
+	}
+
+	return -1;
+}
+
+int lilac_aim_suspicion_add_detection(int client, int cheat)
+{
+	int accountId = GetSteamAccountID(client);
+	if (accountId <= 0) {
+		int count = (cheat == CHEAT_AIMBOT)
+			? lilac_aimbot_get_client_detections(client) : playerinfo_aimlock[client];
+		int token = ++aim_legacy_detection_token;
+		AimLegacyDetection detection;
+		detection.token = token;
+		detection.userid = GetClientUserId(client);
+		detection.cheat = cheat;
+		detection.expiresAt = GetTime() + 600;
+		aim_legacy_detections.PushArray(detection, sizeof(detection));
+		DataPack pack;
+		CreateDataTimer(600.0, cheat == CHEAT_AIMBOT ? timer_decrement_aimbot : timer_decrement_aimlock, pack);
+		pack.WriteCell(token);
+		return count + 1;
+	}
+
+	char steamId64[32];
+	GetClientAuthId(client, AuthId_SteamID64, steamId64, sizeof(steamId64), true);
+	int recordIndex = lilac_aim_suspicion_find_record(accountId, cheat);
+	AimSuspicionRecord record;
+	if (recordIndex == -1) {
+		record.accountId = accountId;
+		record.cheat = cheat;
+		record.detections = 0;
+		record.generation = ++aim_suspicion_next_generation;
+		record.nextDetectionId = 0;
+		record.lastClient = client;
+		record.tracking = false;
+		strcopy(record.steamId64, sizeof(record.steamId64), steamId64);
+		recordIndex = aim_suspicion_records.PushArray(record, sizeof(record));
+	}
+	else {
+		aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+		record.lastClient = client;
+		strcopy(record.steamId64, sizeof(record.steamId64), steamId64);
+	}
+
+	record.detections++;
+	aim_suspicion_records.SetArray(recordIndex, record, sizeof(record));
+	aim_suspicion_accountid[client] = accountId;
+
+	aim_suspicion_records.SetArray(recordIndex, record, sizeof(record));
+	lilac_aim_suspicion_schedule_expiry(recordIndex, 600.0);
+
+	return record.detections;
+}
+
+void lilac_aim_suspicion_schedule_expiry(int recordIndex, float delay)
+{
+	AimSuspicionRecord record;
+	aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+	record.nextDetectionId++;
+	int detectionId = record.nextDetectionId;
+	aim_suspicion_records.SetArray(recordIndex, record, sizeof(record));
+
+	DataPack pack;
+	CreateDataTimer(delay, timer_aim_suspicion_expired, pack);
+	pack.WriteCell(record.accountId);
+	pack.WriteCell(record.cheat);
+	pack.WriteCell(record.generation);
+	pack.WriteCell(detectionId);
+}
+
+int lilac_aim_suspicion_find_client(int accountId)
+{
+	for (int client = 1; client <= MaxClients; client++) {
+		if (is_player_valid(client) && GetSteamAccountID(client) == accountId)
+			return client;
+	}
+	return 0;
+}
+
+void lilac_aim_suspicion_remove_record(int recordIndex, LilacAimTrackingEndReason reason)
+{
+	AimSuspicionRecord record;
+	aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+	int client = lilac_aim_suspicion_find_client(record.accountId);
+	if (record.tracking)
+		lilac_aim_tracking_end_record(recordIndex, reason, client);
+	if (client > 0 && client <= MaxClients && GetSteamAccountID(client) == record.accountId) {
+		if (record.cheat == CHEAT_AIMBOT)
+			lilac_aimbot_set_client_detections(client, 0);
+		else
+			playerinfo_aimlock[client] = 0;
+	}
+	aim_suspicion_records.Erase(recordIndex);
+}
+
+public Action timer_aim_suspicion_expired(Handle timer, DataPack pack)
+{
+	pack.Reset();
+	int accountId = pack.ReadCell();
+	int cheat = pack.ReadCell();
+	int generation = pack.ReadCell();
+	int detectionId = pack.ReadCell();
+	int recordIndex = lilac_aim_suspicion_find_record(accountId, cheat);
+	if (recordIndex == -1)
+		return Plugin_Continue;
+
+	AimSuspicionRecord record;
+	aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+	if (record.generation != generation || detectionId <= 0
+		|| detectionId > record.nextDetectionId || record.detections <= 0)
+		return Plugin_Continue;
+
+	/* Every detection owns one non-repeating timer and a unique ID. The timer is
+	 * consumed once by SourceMod, so out-of-order callbacks still decrement once. */
+	record.detections--;
+	int client = lilac_aim_suspicion_find_client(accountId);
+	if (client > 0) {
+		record.lastClient = client;
+		if (cheat == CHEAT_AIMBOT)
+			lilac_aimbot_set_client_detections(client, record.detections);
+		else
+			playerinfo_aimlock[client] = record.detections;
+	}
+	aim_suspicion_records.SetArray(recordIndex, record, sizeof(record));
+	if (record.detections == 0)
+		lilac_aim_suspicion_remove_record(recordIndex, LilacAimTrackingEnd_Expired);
+
+	return Plugin_Continue;
 }
 
 void lilac_log_setup_client(int client)
@@ -269,13 +489,42 @@ void lilac_ban_client(int client, int cheat)
 	default: return;
 	}
 
+	char trackingIncidentId[37];
+	trackingIncidentId[0] = '\0';
 	lilac_forward_client_ban(client, cheat);
+	if (cheat == CHEAT_AIMBOT || cheat == CHEAT_AIMLOCK) {
+		int accountId = GetSteamAccountID(client);
+		int recordIndex = lilac_aim_suspicion_find_record(accountId, cheat);
+		if (recordIndex != -1) {
+			AimSuspicionRecord record;
+			aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+			strcopy(trackingIncidentId, sizeof(trackingIncidentId), record.incidentId);
+			lilac_aim_suspicion_remove_record(recordIndex, LilacAimTrackingEnd_BanRequested);
+		}
+	}
 
-	if (icvar[CVAR_BANSYSTEM] && NATIVE_EXISTS("BSAccess_AddBanByAccountId")) {
+	if (icvar[CVAR_BANSYSTEM]
+		&& (NATIVE_EXISTS("BSAccess_AddBanByAccountIdTracked") || NATIVE_EXISTS("BSAccess_AddBanByAccountId"))) {
 		int accountid = GetSteamAccountID(client);
-		if (accountid > 0 && BSAccess_AddBanByAccountId(0, accountid, get_ban_length(cheat), reason, "", BANSYSTEM_CONSOLE_NAME)) {
-			CreateTimer(5.0, timer_kick, GetClientUserId(client));
-			return;
+		if (accountid > 0) {
+			if (NATIVE_EXISTS("BSAccess_AddBanByAccountIdTracked")) {
+				char steamId64[32];
+				bool canCorrelate = (cheat == CHEAT_AIMBOT || cheat == CHEAT_AIMLOCK)
+					&& GetClientAuthId(client, AuthId_SteamID64, steamId64, sizeof(steamId64), true)
+					&& trackingIncidentId[0] != '\0';
+				if (canCorrelate)
+					lilac_forward_client_ban_incident(client, cheat, accountid, steamId64, trackingIncidentId);
+				int requestId = BSAccess_AddBanByAccountIdTracked(0, accountid, get_ban_length(cheat), reason, "", BANSYSTEM_CONSOLE_NAME, canCorrelate ? trackingIncidentId : "");
+				if (requestId > 0) {
+					lilac_forward_client_ban_request_queued(client, cheat, accountid, requestId);
+					CreateTimer(5.0, timer_kick, GetClientUserId(client));
+					return;
+				}
+			}
+			else if (BSAccess_AddBanByAccountId(0, accountid, get_ban_length(cheat), reason, "", BANSYSTEM_CONSOLE_NAME)) {
+				CreateTimer(5.0, timer_kick, GetClientUserId(client));
+				return;
+			}
 		}
 	}
 
@@ -301,6 +550,21 @@ void lilac_ban_client(int client, int cheat)
 
 	BanClient(client, get_ban_length(cheat), BANFLAG_AUTO, reason, reason, "lilac", 0);
 	CreateTimer(5.0, timer_kick, GetClientUserId(client));
+}
+
+bool lilac_generate_incident_id(char[] output, int maxlen)
+{
+	if (maxlen < 37)
+		return false;
+	int a = GetURandomInt();
+	int b = GetURandomInt();
+	int c = GetURandomInt();
+	int d = GetURandomInt();
+	int e = GetURandomInt();
+	int f = GetURandomInt();
+	FormatEx(output, maxlen, "%08x-%04x-4%03x-%04x-%08x%04x",
+		a, b & 0xffff, c & 0x0fff, (d & 0x3fff) | 0x8000, e, f & 0xffff);
+	return true;
 }
 
 public Action timer_kick(Handle timer, int userid)
@@ -459,6 +723,249 @@ void lilac_forward_client_ban(int client, int cheat)
 	Call_PushCell(client);
 	Call_PushCell(cheat);
 	Call_Finish(dummy);
+}
+
+void lilac_forward_client_ban_request_queued(int client, int cheat, int accountid, int requestId)
+{
+	int dummy;
+
+	if (forwardhandlebanqueued == null)
+		return;
+
+	Call_StartForward(forwardhandlebanqueued);
+	Call_PushCell(client);
+	Call_PushCell(cheat);
+	Call_PushCell(accountid);
+	Call_PushCell(requestId);
+	Call_Finish(dummy);
+}
+
+void lilac_forward_client_ban_incident(int client, int cheat, int accountid, const char[] steamId64, const char[] incidentId)
+{
+	int dummy;
+	if (forwardhandlebanincident == null)
+		return;
+	Call_StartForward(forwardhandlebanincident);
+	Call_PushCell(client);
+	Call_PushCell(cheat);
+	Call_PushCell(accountid);
+	Call_PushString(steamId64);
+	Call_PushString(incidentId);
+	Call_Finish(dummy);
+}
+
+public any lilac_native_is_aim_tracking(Handle plugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	int cheat = GetNativeCell(2);
+	if (!is_player_valid(client)
+		|| (cheat != CHEAT_AIMBOT && cheat != CHEAT_AIMLOCK))
+		return false;
+
+	int recordIndex = lilac_aim_suspicion_find_record(GetSteamAccountID(client), cheat);
+	if (recordIndex == -1)
+		return false;
+	AimSuspicionRecord record;
+	aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+	return record.tracking;
+}
+
+public any lilac_native_get_aim_tracking_count(Handle plugin, int numParams)
+{
+	int count = 0;
+	AimSuspicionRecord record;
+	for (int i = 0; i < aim_suspicion_records.Length; i++) {
+		aim_suspicion_records.GetArray(i, record, sizeof(record));
+		if (record.tracking)
+			count++;
+	}
+	return count;
+}
+
+public any lilac_native_get_aim_tracking_info(Handle plugin, int numParams)
+{
+	int requestedIndex = GetNativeCell(1);
+	int activeIndex = 0;
+	AimSuspicionRecord record;
+	for (int i = 0; i < aim_suspicion_records.Length; i++) {
+		aim_suspicion_records.GetArray(i, record, sizeof(record));
+		if (!record.tracking)
+			continue;
+		if (activeIndex++ != requestedIndex)
+			continue;
+
+		SetNativeCellRef(2, lilac_aim_suspicion_find_client(record.accountId));
+		SetNativeCellRef(3, record.cheat);
+		SetNativeCellRef(4, record.accountId);
+		SetNativeString(5, record.steamId64, GetNativeCell(6), true);
+		return true;
+	}
+
+	return false;
+}
+
+public any lilac_native_get_aim_tracking_incident_info(Handle plugin, int numParams)
+{
+	int requestedIndex = GetNativeCell(1);
+	int activeIndex = 0;
+	AimSuspicionRecord record;
+	for (int i = 0; i < aim_suspicion_records.Length; i++) {
+		aim_suspicion_records.GetArray(i, record, sizeof(record));
+		if (!record.tracking)
+			continue;
+		if (activeIndex++ != requestedIndex)
+			continue;
+
+		SetNativeString(2, record.incidentId, GetNativeCell(3), true);
+		return true;
+	}
+
+	return false;
+}
+
+void lilac_aim_suspicion_note_detection(int client)
+{
+	if (aim_suspicion_accountid[client] <= 0)
+		aim_suspicion_accountid[client] = GetSteamAccountID(client);
+}
+
+void lilac_aim_suspicion_restore_client(int client, int accountId)
+{
+	aim_suspicion_accountid[client] = accountId;
+	for (int cheat = CHEAT_AIMBOT; cheat <= CHEAT_AIMLOCK; cheat++) {
+		int recordIndex = lilac_aim_suspicion_find_record(accountId, cheat);
+		if (recordIndex != -1) {
+			AimSuspicionRecord record;
+			aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+			record.lastClient = client;
+			aim_suspicion_records.SetArray(recordIndex, record, sizeof(record));
+			if (cheat == CHEAT_AIMBOT)
+				lilac_aimbot_set_client_detections(client, record.detections);
+			else
+				playerinfo_aimlock[client] = record.detections;
+		}
+	}
+}
+
+int lilac_aim_suspicion_find_legacy_token(int token)
+{
+	for (int i = 0; i < aim_legacy_detections.Length; i++) {
+		AimLegacyDetection detection;
+		aim_legacy_detections.GetArray(i, detection, sizeof(detection));
+		if (detection.token == token)
+			return i;
+	}
+	return -1;
+}
+
+void lilac_aim_suspicion_legacy_timer_expired(DataPack pack, int cheat)
+{
+	pack.Reset();
+	int token = pack.ReadCell();
+	int index = lilac_aim_suspicion_find_legacy_token(token);
+	if (index == -1)
+		return;
+	AimLegacyDetection detection;
+	aim_legacy_detections.GetArray(index, detection, sizeof(detection));
+	aim_legacy_detections.Erase(index);
+	int client = GetClientOfUserId(detection.userid);
+	if (!is_player_valid(client))
+		return;
+	if (cheat == CHEAT_AIMBOT) {
+		if (lilac_aimbot_get_client_detections(client) > 0)
+			lilac_aimbot_set_client_detections(client, lilac_aimbot_get_client_detections(client) - 1);
+	}
+	else if (playerinfo_aimlock[client] > 0) {
+		playerinfo_aimlock[client]--;
+	}
+}
+
+void lilac_aim_suspicion_clear_legacy_user(int userid)
+{
+	for (int i = aim_legacy_detections.Length - 1; i >= 0; i--) {
+		AimLegacyDetection detection;
+		aim_legacy_detections.GetArray(i, detection, sizeof(detection));
+		if (detection.userid == userid)
+			aim_legacy_detections.Erase(i);
+	}
+}
+
+void lilac_aim_suspicion_promote_legacy(int client, int accountId)
+{
+	int userid = GetClientUserId(client);
+	int promoted[2];
+	promoted[0] = 0;
+	promoted[1] = 0;
+	for (int i = aim_legacy_detections.Length - 1; i >= 0; i--) {
+		AimLegacyDetection detection;
+		aim_legacy_detections.GetArray(i, detection, sizeof(detection));
+		if (detection.userid != userid)
+			continue;
+
+		float remaining = float(detection.expiresAt - GetTime());
+		if (remaining <= 0.0) {
+			if (detection.cheat == CHEAT_AIMBOT && lilac_aimbot_get_client_detections(client) > 0)
+				lilac_aimbot_set_client_detections(client, lilac_aimbot_get_client_detections(client) - 1);
+			else if (detection.cheat == CHEAT_AIMLOCK && playerinfo_aimlock[client] > 0)
+				playerinfo_aimlock[client]--;
+			aim_legacy_detections.Erase(i);
+			continue;
+		}
+
+		int cheat = detection.cheat;
+		char steamId64[32];
+		GetClientAuthId(client, AuthId_SteamID64, steamId64, sizeof(steamId64), true);
+		int recordIndex = lilac_aim_suspicion_find_record(accountId, cheat);
+		AimSuspicionRecord record;
+		if (recordIndex == -1) {
+			record.accountId = accountId;
+			record.cheat = cheat;
+			record.detections = 0;
+			record.generation = ++aim_suspicion_next_generation;
+			record.nextDetectionId = 0;
+			record.lastClient = client;
+			record.tracking = false;
+			strcopy(record.steamId64, sizeof(record.steamId64), steamId64);
+			recordIndex = aim_suspicion_records.PushArray(record, sizeof(record));
+		}
+		else
+			aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+
+		record.detections++;
+		record.lastClient = client;
+		strcopy(record.steamId64, sizeof(record.steamId64), steamId64);
+		aim_suspicion_records.SetArray(recordIndex, record, sizeof(record));
+		lilac_aim_suspicion_schedule_expiry(recordIndex, remaining);
+		promoted[cheat == CHEAT_AIMBOT ? 0 : 1]++;
+		aim_legacy_detections.Erase(i);
+	}
+
+	for (int cheat = CHEAT_AIMBOT; cheat <= CHEAT_AIMLOCK; cheat++) {
+		int recordIndex = lilac_aim_suspicion_find_record(accountId, cheat);
+		if (recordIndex == -1)
+			continue;
+		AimSuspicionRecord record;
+		aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
+		if (cheat == CHEAT_AIMBOT)
+			lilac_aimbot_set_client_detections(client, record.detections);
+		else
+			playerinfo_aimlock[client] = record.detections;
+		if (promoted[cheat == CHEAT_AIMBOT ? 0 : 1] > 0 && record.detections >= 2)
+			lilac_aim_tracking_start(client, cheat);
+	}
+}
+
+void lilac_aim_suspicion_clear_account(int accountId, LilacAimTrackingEndReason reason)
+{
+	if (accountId <= 0 || aim_suspicion_records == null)
+		return;
+
+	for (int i = aim_suspicion_records.Length - 1; i >= 0; i--) {
+		AimSuspicionRecord record;
+		aim_suspicion_records.GetArray(i, record, sizeof(record));
+		if (record.accountId == accountId)
+			lilac_aim_suspicion_remove_record(i, reason);
+	}
 }
 
 bool lilac_forward_allow_cheat_detection(int client, int cheat)

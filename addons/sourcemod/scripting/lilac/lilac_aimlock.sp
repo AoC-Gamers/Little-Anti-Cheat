@@ -169,9 +169,7 @@ static void lilac_detected_aimlock(int client)
 
 	if (lilac_forward_allow_cheat_detection(client, CHEAT_AIMLOCK) == false)
 		return;
-
-	/* Detection expires in 10 minutes. */
-	CreateTimer(600.0, timer_decrement_aimlock, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+	lilac_aim_suspicion_note_detection(client);
 
 	char sDetails[512];
 	Format(sDetails, sizeof(sDetails), "Detection: %d", playerinfo_aimlock[client]);
@@ -180,8 +178,12 @@ static void lilac_detected_aimlock(int client)
 	lilac_forward_client_cheat(client, CHEAT_AIMLOCK);
 
 	/* Don't log the first detection. */
-	if (++playerinfo_aimlock[client] < 2)
+	int detections = lilac_aim_suspicion_add_detection(client, CHEAT_AIMLOCK);
+	playerinfo_aimlock[client] = detections;
+	if (detections < 2)
 		return;
+	else
+		lilac_aim_tracking_start(client, CHEAT_AIMLOCK);
 
 	if (icvar[CVAR_CHEAT_WARN])
 		lilac_warn_admins(client, CHEAT_AIMLOCK, playerinfo_aimlock[client]);
@@ -263,15 +265,8 @@ static bool lilac_is_player_in_aimlock_que(int client)
 			&& playerinfo_time_aimlock[client] > 1.0)); /* Had one aimlock the past three minutes. */
 }
 
-public Action timer_decrement_aimlock(Handle timer, int userid)
+public Action timer_decrement_aimlock(Handle timer, DataPack pack)
 {
-	int client = GetClientOfUserId(userid);
-
-	if (!is_player_valid(client))
-		return Plugin_Continue;
-
-	if (playerinfo_aimlock[client] > 0)
-		playerinfo_aimlock[client]--;
-
+	lilac_aim_suspicion_legacy_timer_expired(pack, CHEAT_AIMLOCK);
 	return Plugin_Continue;
 }

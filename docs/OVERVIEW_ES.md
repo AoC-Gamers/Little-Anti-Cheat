@@ -45,6 +45,55 @@ El nombre del emisor es información de trazabilidad; no concede permisos ni
 reemplaza las validaciones de BanSystem. Si la solicitud no es aceptada, Lilac
 conserva su cadena de fallback hacia los demás proveedores configurados.
 
+### Seguimiento de Aimbot y Aimlock
+
+El include público `lilac.inc` expone `lilac_aim_tracking_started` y
+`lilac_aim_tracking_ended`. Lilac inicia un seguimiento al alcanzar dos
+detecciones normalizadas del mismo jugador y cheat dentro de sus ventanas de
+sospecha de diez minutos. La detección que cruza el umbral primero dispara
+`lilac_cheater_detected` y luego `lilac_aim_tracking_started`. La identidad del
+seguimiento usa Steam account ID y SteamID64; el índice `client` solo identifica
+el slot mientras está conectado. Cada seguimiento crea un UUID canónico que
+permanece estable hasta su cierre. BanSystem puede adjuntar el mismo UUID al
+registro privado del primer segmento SourceTV confirmado donde el seguimiento
+sigue activo. El tiempo y ticks describen ese ancla de grabación, no el trigger
+anterior.
+
+El cierre informa uno de cuatro motivos: `Expired` cuando ya no quedan
+sospechas, `Disconnected`, `BanRequested` o `PluginUnload`. En un ban, el orden
+es `lilac_cheater_banned`, `lilac_aim_tracking_ended(BanRequested)` y, si
+BanSystem acepta la solicitud asíncrona, `lilac_cheater_ban_request_queued`.
+Este último forward confirma aceptación en cola, no persistencia de la sanción.
+Si se crea una sanción Access mediante el native tracked, Lilac pasa el mismo
+UUID de seguimiento en la solicitud original. La asociación central usa esa
+clave persistida junto al commit de la sanción; issuer y texto de reason no son
+prueba de correlación.
+
+Los vencimientos usan timers individuales vinculados a account ID, cheat,
+generación del registro e ID de detección; un cambio de mapa o de slot no los
+deja huérfanos. En L4D2, `map_transition` conserva el registro al desconectar
+clientes para el cambio de capítulo. Lilac restaura sus contadores al autorizar
+la identidad en el mapa nuevo. Hay una gracia de 120 segundos desde `OnMapStart`
+para que los jugadores vuelvan; si una identidad del capítulo anterior no
+reingresa, el seguimiento termina como `Disconnected`. Una desconexión normal
+cierra el seguimiento y limpia sus sospechas. La validación real de una
+transición de capítulo queda pendiente de smoke test en SRCDS.
+
+Las detecciones previas a la autorización conservan contador y deadline
+legacy por userid. Si Steam autoriza antes del vencimiento, Lilac las migra al
+registro estable con el tiempo restante. Si ocurre `map_transition` primero,
+Lilac descarta solo esas detecciones sin identidad estable; no extiende su
+ventana ni las atribuye a un slot reutilizado. No se emite un tracking sin una
+identidad de Steam válida. Una desconexión real dentro de `map_transition` no
+se puede distinguir de la desconexión sintética del cambio de capítulo; se
+conserva como carry y se cierra como `Disconnected` si no vuelve en 120 segundos.
+
+El include también ofrece `lilac_GetAimTrackingCount()` y
+`lilac_GetAimTrackingInfo(index, client, cheat, accountId, steamId64, maxlen)`
+para que consumidores cargados tarde recuperen una instantánea estable. `client`
+vale `0` si la identidad no está conectada. `lilac_IsAimTracking(client, cheat)`
+consulta el estado desde un slot conectado.
+
 ## Juegos compatibles
 
 - `[TF2]` Team Fortress 2
