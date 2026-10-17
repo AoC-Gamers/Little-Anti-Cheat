@@ -32,6 +32,11 @@ int lilac_aimbot_get_client_detections(int client)
 	return aimbot_detection[client];
 }
 
+void lilac_aimbot_set_client_detections(int client, int detections)
+{
+	aimbot_detection[client] = detections;
+}
+
 public Action event_player_death(Event event, const char[] name, bool dontBroadcast)
 {
 	char wep[64];
@@ -327,9 +332,7 @@ static void lilac_detected_aimbot(int client, float delta, float td, int flags)
 
 	if (lilac_forward_allow_cheat_detection(client, CHEAT_AIMBOT) == false)
 		return;
-
-	/* Detection expires in 10 minutes. */
-	CreateTimer(600.0, timer_decrement_aimbot, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+	lilac_aim_suspicion_note_detection(client);
 
 	char sDetails[512];
 	Format(sDetails, sizeof(sDetails),
@@ -345,8 +348,12 @@ static void lilac_detected_aimbot(int client, float delta, float td, int flags)
 	lilac_forward_client_cheat(client, CHEAT_AIMBOT);
 
 	/* Don't log the first detection. */
-	if (++aimbot_detection[client] < 2)
+	int detections = lilac_aim_suspicion_add_detection(client, CHEAT_AIMBOT);
+	lilac_aimbot_set_client_detections(client, detections);
+	if (detections < 2)
 		return;
+	else
+		lilac_aim_tracking_start(client, CHEAT_AIMBOT);
 
 	if (icvar[CVAR_CHEAT_WARN])
 		lilac_warn_admins(client, CHEAT_AIMBOT, aimbot_detection[client]);
@@ -384,15 +391,8 @@ static void lilac_detected_aimbot(int client, float delta, float td, int flags)
 	}
 }
 
-public Action timer_decrement_aimbot(Handle timer, int userid)
+public Action timer_decrement_aimbot(Handle timer, DataPack pack)
 {
-	int client = GetClientOfUserId(userid);
-
-	if (!is_player_valid(client))
-		return Plugin_Continue;
-
-	if (aimbot_detection[client] > 0)
-		aimbot_detection[client]--;
-
+	lilac_aim_suspicion_legacy_timer_expired(pack, CHEAT_AIMBOT);
 	return Plugin_Continue;
 }

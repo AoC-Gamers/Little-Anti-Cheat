@@ -74,6 +74,9 @@ public Plugin myinfo = {
 public void OnPluginStart()
 {
 	LoadTranslations("lilac.phrases.txt");
+	aim_suspicion_records = new ArrayList(sizeof(AimSuspicionRecord));
+	aim_transition_carry_accounts = new ArrayList();
+	aim_legacy_detections = new ArrayList(sizeof(AimLegacyDetection));
 
 #if defined TF2C
 	ggame = GAME_TF2;
@@ -95,6 +98,7 @@ public void OnPluginStart()
 	}
 	else if (StrEqual(gamefolder, "left4dead2", false)) {
 		ggame = GAME_L4D2;
+		HookEvent("map_transition", event_map_transition, EventHookMode_PostNoCopy);
 	}
 	else if (StrEqual(gamefolder, "left4dead", false)) {
 		ggame = GAME_L4D;
@@ -144,6 +148,16 @@ public void OnPluginStart()
 		ET_Ignore, Param_Cell, Param_Cell);
 	forwardhandleban = CreateGlobalForward("lilac_cheater_banned",
 		ET_Ignore, Param_Cell, Param_Cell);
+	forwardhandlebanqueued = CreateGlobalForward("lilac_cheater_ban_request_queued",
+		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
+	forwardhandlebanincident = CreateGlobalForward("lilac_cheater_ban_incident",
+		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_String, Param_String);
+	forwardhandleaimtrackingstarted = CreateGlobalForward("lilac_aim_tracking_started",
+		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_String);
+	forwardhandleaimtrackingincidentstarted = CreateGlobalForward("lilac_aim_tracking_incident_started",
+		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_String, Param_String);
+	forwardhandleaimtrackingended = CreateGlobalForward("lilac_aim_tracking_ended",
+		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_String, Param_Cell);
 	forwardhandleallow = CreateGlobalForward("lilac_allow_cheat_detection",
 		ET_Event, Param_Cell, Param_Cell);
 
@@ -194,12 +208,17 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int err_
 	RegPluginLibrary("lilac");
 
 	CreateNative("lilac_GetDetectedInfos", lilac_native_get_detected_infos);
+	CreateNative("lilac_IsAimTracking", lilac_native_is_aim_tracking);
+	CreateNative("lilac_GetAimTrackingCount", lilac_native_get_aim_tracking_count);
+	CreateNative("lilac_GetAimTrackingInfo", lilac_native_get_aim_tracking_info);
+	CreateNative("lilac_GetAimTrackingIncidentInfo", lilac_native_get_aim_tracking_incident_info);
 
 	/* Been told this isn't needed, but just in case. */
 	MarkNativeAsOptional("SBBanPlayer");
 	MarkNativeAsOptional("SBPP_BanPlayer");
 	MarkNativeAsOptional("MABanPlayer");
 	MarkNativeAsOptional("BSAccess_AddBanByAccountId");
+	MarkNativeAsOptional("BSAccess_AddBanByAccountIdTracked");
 	MarkNativeAsOptional("IRC_MsgFlaggedChannels");
 
 	/* Build the log path for the file in case the user has overridden sm_basepath. */
@@ -234,9 +253,138 @@ public void OnLibraryRemoved(const char []name)
 public void OnClientPutInServer(int client)
 {
 	lilac_reset_client(client);
+	int accountId = GetSteamAccountID(client);
+	if (accountId > 0) {
+		lilac_aim_suspicion_promote_legacy(client, accountId);
+		lilac_aim_suspicion_restore_client(client, accountId);
+	}
 	lilac_string_check_name(client);
 
 	CreateTimer(30.0, timer_welcome, GetClientUserId(client));
+}
+
+public void OnClientDisconnect(int client)
+{
+	if (aim_map_transition_pending) {
+		lilac_aim_suspicion_clear_legacy_user(GetClientUserId(client));
+		lilac_aimbot_reset_client(client);
+		playerinfo_aimlock[client] = 0;
+		playerinfo_aimlock_sus[client] = 0;
+		aim_suspicion_accountid[client] = 0;
+		return;
+	}
+
+	lilac_aim_suspicion_clear_account(aim_suspicion_accountid[client], LilacAimTrackingEnd_Disconnected);
+	lilac_aim_suspicion_clear_legacy_user(GetClientUserId(client));
+	lilac_aimbot_reset_client(client);
+	playerinfo_aimlock[client] = 0;
+	playerinfo_aimlock_sus[client] = 0;
+	aim_suspicion_accountid[client] = 0;
+}
+
+public void OnClientAuthorized(int client, const char[] auth)
+{
+	int accountId = GetSteamAccountID(client);
+	if (accountId > 0 && accountId != aim_suspicion_accountid[client]) {
+		if (aim_suspicion_accountid[client] > 0)
+			lilac_aim_suspicion_clear_account(aim_suspicion_accountid[client], LilacAimTrackingEnd_Disconnected);
+		lilac_aim_suspicion_promote_legacy(client, accountId);
+		lilac_aim_suspicion_restore_client(client, accountId);
+	}
+}
+
+public Action event_map_transition(Event event, const char[] name, bool dontBroadcast)
+{
+	aim_map_transition_pending = true;
+	if (aim_map_carry_cleanup_timer != INVALID_HANDLE) {
+		KillTimer(aim_map_carry_cleanup_timer);
+		aim_map_carry_cleanup_timer = INVALID_HANDLE;
+	}
+	aim_transition_carry_accounts.Clear();
+	/* Unauthenticated detections have no stable identity to carry across chapters. */
+	int legacyUserids[MAXPLAYERS + 1];
+	int legacyUseridCount = 0;
+	for (int i = 0; i < aim_legacy_detections.Length; i++) {
+		AimLegacyDetection detection;
+		aim_legacy_detections.GetArray(i, detection, sizeof(detection));
+		bool alreadyAdded = false;
+		for (int j = 0; j < legacyUseridCount; j++) {
+			if (legacyUserids[j] == detection.userid) {
+				alreadyAdded = true;
+				break;
+			}
+		}
+		if (!alreadyAdded)
+			legacyUserids[legacyUseridCount++] = detection.userid;
+	}
+	for (int i = 0; i < legacyUseridCount; i++) {
+		int userid = legacyUserids[i];
+		int client = GetClientOfUserId(userid);
+		if (client < 1 || client > MaxClients || !is_player_valid(client))
+			continue;
+
+		int accountId = GetSteamAccountID(client);
+		if (accountId > 0) {
+			lilac_aim_suspicion_promote_legacy(client, accountId);
+			continue;
+		}
+
+		for (int j = 0; j < aim_legacy_detections.Length; j++) {
+			AimLegacyDetection detection;
+			aim_legacy_detections.GetArray(j, detection, sizeof(detection));
+			if (detection.userid != userid)
+				continue;
+			if (detection.cheat == CHEAT_AIMBOT)
+				lilac_aimbot_set_client_detections(client, 0);
+			else if (detection.cheat == CHEAT_AIMLOCK)
+				playerinfo_aimlock[client] = 0;
+		}
+	}
+	aim_legacy_detections.Clear();
+	AimSuspicionRecord record;
+	for (int i = 0; i < aim_suspicion_records.Length; i++) {
+		aim_suspicion_records.GetArray(i, record, sizeof(record));
+		if (record.detections <= 0)
+			continue;
+
+		bool alreadyAdded = false;
+		for (int j = 0; j < aim_transition_carry_accounts.Length; j++) {
+			if (aim_transition_carry_accounts.Get(j) == record.accountId) {
+				alreadyAdded = true;
+				break;
+			}
+		}
+		if (!alreadyAdded)
+			aim_transition_carry_accounts.Push(record.accountId);
+	}
+	return Plugin_Continue;
+}
+
+public void OnMapStart()
+{
+	/* LevelEnd disconnects clients before map start. Their account-keyed records and
+	 * one-shot expiry timers survive this slot teardown and are restored on auth. */
+	aim_map_transition_pending = false;
+	if (aim_transition_carry_accounts.Length > 0)
+		aim_map_carry_cleanup_timer = CreateTimer(120.0, timer_aim_tracking_map_carry_cleanup);
+}
+
+public Action timer_aim_tracking_map_carry_cleanup(Handle timer)
+{
+	aim_map_carry_cleanup_timer = INVALID_HANDLE;
+	for (int i = 0; i < aim_transition_carry_accounts.Length; i++) {
+		int accountId = aim_transition_carry_accounts.Get(i);
+		if (lilac_aim_suspicion_find_client(accountId) == 0)
+			lilac_aim_suspicion_clear_account(accountId, LilacAimTrackingEnd_Disconnected);
+	}
+	aim_transition_carry_accounts.Clear();
+	return Plugin_Continue;
+}
+
+public void OnPluginEnd()
+{
+	for (int i = aim_suspicion_records.Length - 1; i >= 0; i--)
+		lilac_aim_suspicion_remove_record(i, LilacAimTrackingEnd_PluginUnload);
 }
 
 public void TF2_OnConditionRemoved(int client, TFCond condition)

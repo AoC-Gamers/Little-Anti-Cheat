@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.9.0
+
+- Cada tracking Aimbot/Aimlock recibe un UUID estable, expuesto en los forwards y el snapshot público de tracks.
+- El native tracked de BanSystem Access recibe opcionalmente el UUID de tracking en la petición original de sanción.
+- Se añade un forward posterior a la aceptación de Access con el ID local de solicitud.
+- El forward previo de ban queda documentado como intención, no como confirmación.
+
 ## 1.8.1
 
 - Identificación explícita de `Lilac Anti-Cheat` como emisor de consola al crear sanciones de acceso mediante BanSystem.

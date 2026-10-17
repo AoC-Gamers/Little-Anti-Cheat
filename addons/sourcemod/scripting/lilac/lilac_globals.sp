@@ -118,7 +118,7 @@
 #define PLUGIN_NAME      "[Lilac] Little Anti-Cheat"
 #define PLUGIN_AUTHOR    "J_Tanzanite"
 #define PLUGIN_DESC      "An opensource Anti-Cheat"
-#define PLUGIN_VERSION   "1.8.1"
+#define PLUGIN_VERSION   "1.9.0"
 #define BANSYSTEM_CONSOLE_NAME "Lilac Anti-Cheat"
 #define PLUGIN_URL       "https://github.com/J-Tanzanite/Little-Anti-Cheat"
 
@@ -150,7 +150,43 @@ char log_file[PLATFORM_MAX_PATH];
 float max_angles[3] = {89.01, 0.0, 50.01};
 Handle forwardhandle = INVALID_HANDLE;
 Handle forwardhandleban = INVALID_HANDLE;
+Handle forwardhandlebanqueued = INVALID_HANDLE;
+Handle forwardhandlebanincident = INVALID_HANDLE;
+Handle forwardhandleaimtrackingstarted = INVALID_HANDLE;
+Handle forwardhandleaimtrackingincidentstarted = INVALID_HANDLE;
+Handle forwardhandleaimtrackingended = INVALID_HANDLE;
 Handle forwardhandleallow = INVALID_HANDLE;
+
+/* Aimbot/Aimlock demo tracking state. */
+int aim_suspicion_accountid[MAXPLAYERS + 1];
+bool aim_map_transition_pending;
+ArrayList aim_transition_carry_accounts;
+Handle aim_map_carry_cleanup_timer = INVALID_HANDLE;
+enum struct AimLegacyDetection
+{
+	int token;
+	int userid;
+	int cheat;
+	int expiresAt;
+}
+ArrayList aim_legacy_detections;
+int aim_legacy_detection_token;
+
+enum struct AimSuspicionRecord
+{
+	int accountId;
+	int cheat;
+	int detections;
+	int generation;
+	int nextDetectionId;
+	int lastClient;
+	bool tracking;
+	char steamId64[32];
+	char incidentId[37];
+}
+
+ArrayList aim_suspicion_records;
+int aim_suspicion_next_generation;
 
 /* External plugins. */
 bool sourcebans_exist = false;
@@ -187,3 +223,4 @@ native Function MABanPlayer(int iClient, int iTarget, int iType, int iTime, char
 native Function SBBanPlayer(int client, int target, int time, const char[] reason);
 native Function SBPP_BanPlayer(int iAdmin, int iTarget, int iTime, const char[] sReason);
 native bool BSAccess_AddBanByAccountId(int iAdmin, int iAccountId, int iLength = 0, const char[] szReason = "", const char[] szContext = "", const char[] consoleName = "");
+native int BSAccess_AddBanByAccountIdTracked(int iAdmin, int iAccountId, int iLength = 0, const char[] szReason = "", const char[] szContext = "", const char[] consoleName = "", const char[] incidentId = "");
