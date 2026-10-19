@@ -148,14 +148,8 @@ public void OnPluginStart()
 		ET_Ignore, Param_Cell, Param_Cell);
 	forwardhandleban = CreateGlobalForward("lilac_cheater_banned",
 		ET_Ignore, Param_Cell, Param_Cell);
-	forwardhandlebanqueued = CreateGlobalForward("lilac_cheater_ban_request_queued",
-		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
-	forwardhandlebanincident = CreateGlobalForward("lilac_cheater_ban_incident",
-		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_String, Param_String);
 	forwardhandleaimtrackingstarted = CreateGlobalForward("lilac_aim_tracking_started",
 		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_String);
-	forwardhandleaimtrackingincidentstarted = CreateGlobalForward("lilac_aim_tracking_incident_started",
-		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_String, Param_String);
 	forwardhandleaimtrackingended = CreateGlobalForward("lilac_aim_tracking_ended",
 		ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_String, Param_Cell);
 	forwardhandleallow = CreateGlobalForward("lilac_allow_cheat_detection",
@@ -211,14 +205,12 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int err_
 	CreateNative("lilac_IsAimTracking", lilac_native_is_aim_tracking);
 	CreateNative("lilac_GetAimTrackingCount", lilac_native_get_aim_tracking_count);
 	CreateNative("lilac_GetAimTrackingInfo", lilac_native_get_aim_tracking_info);
-	CreateNative("lilac_GetAimTrackingIncidentInfo", lilac_native_get_aim_tracking_incident_info);
 
 	/* Been told this isn't needed, but just in case. */
 	MarkNativeAsOptional("SBBanPlayer");
 	MarkNativeAsOptional("SBPP_BanPlayer");
 	MarkNativeAsOptional("MABanPlayer");
-	MarkNativeAsOptional("BSAccess_AddBanByAccountId");
-	MarkNativeAsOptional("BSAccess_AddBanByAccountIdTracked");
+	MarkNativeAsOptional("BSAccess_RequestLilacBan");
 	MarkNativeAsOptional("IRC_MsgFlaggedChannels");
 
 	/* Build the log path for the file in case the user has overridden sm_basepath. */

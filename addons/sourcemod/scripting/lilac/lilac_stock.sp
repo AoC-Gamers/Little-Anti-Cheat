@@ -145,8 +145,6 @@ void lilac_aim_tracking_start(int client, int cheat)
 	record.lastClient = client;
 	aim_suspicion_accountid[client] = accountId;
 	strcopy(record.steamId64, sizeof(record.steamId64), steamId64);
-	if (!lilac_generate_incident_id(record.incidentId, sizeof(record.incidentId)))
-		record.incidentId[0] = '\0';
 	aim_suspicion_records.SetArray(recordIndex, record, sizeof(record));
 
 	int dummy;
@@ -158,15 +156,7 @@ void lilac_aim_tracking_start(int client, int cheat)
 		Call_PushString(steamId64);
 		Call_Finish(dummy);
 	}
-	if (forwardhandleaimtrackingincidentstarted != null) {
-		Call_StartForward(forwardhandleaimtrackingincidentstarted);
-		Call_PushCell(client);
-		Call_PushCell(cheat);
-		Call_PushCell(accountId);
-		Call_PushString(steamId64);
-		Call_PushString(record.incidentId);
-		Call_Finish(dummy);
-	}
+
 }
 
 void lilac_aim_tracking_end_record(int recordIndex, LilacAimTrackingEndReason reason, int eventClient)
@@ -489,44 +479,19 @@ void lilac_ban_client(int client, int cheat)
 	default: return;
 	}
 
-	char trackingIncidentId[37];
-	trackingIncidentId[0] = '\0';
 	lilac_forward_client_ban(client, cheat);
+	// BanSystem reads its own active incident before the tracking closes.
+	bool bansystemSelected = icvar[CVAR_BANSYSTEM] != 0;
+	if (bansystemSelected)
+		lilac_handle_local_bansystem_ban(client, cheat, reason);
 	if (cheat == CHEAT_AIMBOT || cheat == CHEAT_AIMLOCK) {
-		int accountId = GetSteamAccountID(client);
-		int recordIndex = lilac_aim_suspicion_find_record(accountId, cheat);
-		if (recordIndex != -1) {
-			AimSuspicionRecord record;
-			aim_suspicion_records.GetArray(recordIndex, record, sizeof(record));
-			strcopy(trackingIncidentId, sizeof(trackingIncidentId), record.incidentId);
+		int recordIndex = lilac_aim_suspicion_find_record(GetSteamAccountID(client), cheat);
+		if (recordIndex != -1)
 			lilac_aim_suspicion_remove_record(recordIndex, LilacAimTrackingEnd_BanRequested);
-		}
 	}
+	if (bansystemSelected)
+		return; // Rejection never falls through to another provider or timer kick.
 
-	if (icvar[CVAR_BANSYSTEM]
-		&& (NATIVE_EXISTS("BSAccess_AddBanByAccountIdTracked") || NATIVE_EXISTS("BSAccess_AddBanByAccountId"))) {
-		int accountid = GetSteamAccountID(client);
-		if (accountid > 0) {
-			if (NATIVE_EXISTS("BSAccess_AddBanByAccountIdTracked")) {
-				char steamId64[32];
-				bool canCorrelate = (cheat == CHEAT_AIMBOT || cheat == CHEAT_AIMLOCK)
-					&& GetClientAuthId(client, AuthId_SteamID64, steamId64, sizeof(steamId64), true)
-					&& trackingIncidentId[0] != '\0';
-				if (canCorrelate)
-					lilac_forward_client_ban_incident(client, cheat, accountid, steamId64, trackingIncidentId);
-				int requestId = BSAccess_AddBanByAccountIdTracked(0, accountid, get_ban_length(cheat), reason, "", BANSYSTEM_CONSOLE_NAME, canCorrelate ? trackingIncidentId : "");
-				if (requestId > 0) {
-					lilac_forward_client_ban_request_queued(client, cheat, accountid, requestId);
-					CreateTimer(5.0, timer_kick, GetClientUserId(client));
-					return;
-				}
-			}
-			else if (BSAccess_AddBanByAccountId(0, accountid, get_ban_length(cheat), reason, "", BANSYSTEM_CONSOLE_NAME)) {
-				CreateTimer(5.0, timer_kick, GetClientUserId(client));
-				return;
-			}
-		}
-	}
 
 	if (icvar[CVAR_MA] && NATIVE_EXISTS("MABanPlayer")) {
 		MABanPlayer(0, client, MA_BAN_STEAM, get_ban_length(cheat), reason);
@@ -550,21 +515,6 @@ void lilac_ban_client(int client, int cheat)
 
 	BanClient(client, get_ban_length(cheat), BANFLAG_AUTO, reason, reason, "lilac", 0);
 	CreateTimer(5.0, timer_kick, GetClientUserId(client));
-}
-
-bool lilac_generate_incident_id(char[] output, int maxlen)
-{
-	if (maxlen < 37)
-		return false;
-	int a = GetURandomInt();
-	int b = GetURandomInt();
-	int c = GetURandomInt();
-	int d = GetURandomInt();
-	int e = GetURandomInt();
-	int f = GetURandomInt();
-	FormatEx(output, maxlen, "%08x-%04x-4%03x-%04x-%08x%04x",
-		a, b & 0xffff, c & 0x0fff, (d & 0x3fff) | 0x8000, e, f & 0xffff);
-	return true;
 }
 
 public Action timer_kick(Handle timer, int userid)
@@ -725,34 +675,6 @@ void lilac_forward_client_ban(int client, int cheat)
 	Call_Finish(dummy);
 }
 
-void lilac_forward_client_ban_request_queued(int client, int cheat, int accountid, int requestId)
-{
-	int dummy;
-
-	if (forwardhandlebanqueued == null)
-		return;
-
-	Call_StartForward(forwardhandlebanqueued);
-	Call_PushCell(client);
-	Call_PushCell(cheat);
-	Call_PushCell(accountid);
-	Call_PushCell(requestId);
-	Call_Finish(dummy);
-}
-
-void lilac_forward_client_ban_incident(int client, int cheat, int accountid, const char[] steamId64, const char[] incidentId)
-{
-	int dummy;
-	if (forwardhandlebanincident == null)
-		return;
-	Call_StartForward(forwardhandlebanincident);
-	Call_PushCell(client);
-	Call_PushCell(cheat);
-	Call_PushCell(accountid);
-	Call_PushString(steamId64);
-	Call_PushString(incidentId);
-	Call_Finish(dummy);
-}
 
 public any lilac_native_is_aim_tracking(Handle plugin, int numParams)
 {
@@ -798,25 +720,6 @@ public any lilac_native_get_aim_tracking_info(Handle plugin, int numParams)
 		SetNativeCellRef(3, record.cheat);
 		SetNativeCellRef(4, record.accountId);
 		SetNativeString(5, record.steamId64, GetNativeCell(6), true);
-		return true;
-	}
-
-	return false;
-}
-
-public any lilac_native_get_aim_tracking_incident_info(Handle plugin, int numParams)
-{
-	int requestedIndex = GetNativeCell(1);
-	int activeIndex = 0;
-	AimSuspicionRecord record;
-	for (int i = 0; i < aim_suspicion_records.Length; i++) {
-		aim_suspicion_records.GetArray(i, record, sizeof(record));
-		if (!record.tracking)
-			continue;
-		if (activeIndex++ != requestedIndex)
-			continue;
-
-		SetNativeString(2, record.incidentId, GetNativeCell(3), true);
 		return true;
 	}
 
@@ -1000,4 +903,13 @@ public int lilac_native_get_detected_infos(Handle hPlugin, int numParams)
 		return 1;
 
 	return -1;
+}
+
+// Selecting BanSystem owns the route even when admission is disabled or the
+// provider is unavailable. Only Core applies after durability; never timer_kick.
+bool lilac_handle_local_bansystem_ban(int client, int cheat, const char[] reason)
+{
+	if (bansystem_exist && NATIVE_EXISTS("BSAccess_RequestLilacBan"))
+		BSAccess_RequestLilacBan(client, cheat, get_ban_length(cheat), reason);
+	return true;
 }
