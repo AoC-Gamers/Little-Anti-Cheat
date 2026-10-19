@@ -118,7 +118,7 @@
 #define PLUGIN_NAME      "[Lilac] Little Anti-Cheat"
 #define PLUGIN_AUTHOR    "J_Tanzanite"
 #define PLUGIN_DESC      "An opensource Anti-Cheat"
-#define PLUGIN_VERSION   "1.9.0"
+#define PLUGIN_VERSION   "3.0.0"
 #define BANSYSTEM_CONSOLE_NAME "Lilac Anti-Cheat"
 #define PLUGIN_URL       "https://github.com/J-Tanzanite/Little-Anti-Cheat"
 
@@ -150,10 +150,7 @@ char log_file[PLATFORM_MAX_PATH];
 float max_angles[3] = {89.01, 0.0, 50.01};
 Handle forwardhandle = INVALID_HANDLE;
 Handle forwardhandleban = INVALID_HANDLE;
-Handle forwardhandlebanqueued = INVALID_HANDLE;
-Handle forwardhandlebanincident = INVALID_HANDLE;
 Handle forwardhandleaimtrackingstarted = INVALID_HANDLE;
-Handle forwardhandleaimtrackingincidentstarted = INVALID_HANDLE;
 Handle forwardhandleaimtrackingended = INVALID_HANDLE;
 Handle forwardhandleallow = INVALID_HANDLE;
 
@@ -182,7 +179,6 @@ enum struct AimSuspicionRecord
 	int lastClient;
 	bool tracking;
 	char steamId64[32];
-	char incidentId[37];
 }
 
 ArrayList aim_suspicion_records;
@@ -222,5 +218,8 @@ native Function IRC_MsgFlaggedChannels(const char[] flag, const char[] format, a
 native Function MABanPlayer(int iClient, int iTarget, int iType, int iTime, char[] sReason);
 native Function SBBanPlayer(int client, int target, int time, const char[] reason);
 native Function SBPP_BanPlayer(int iAdmin, int iTarget, int iTime, const char[] sReason);
-native bool BSAccess_AddBanByAccountId(int iAdmin, int iAccountId, int iLength = 0, const char[] szReason = "", const char[] szContext = "", const char[] consoleName = "");
-native int BSAccess_AddBanByAccountIdTracked(int iAdmin, int iAccountId, int iLength = 0, const char[] szReason = "", const char[] szContext = "", const char[] consoleName = "", const char[] incidentId = "");
+
+
+
+// BanSystem owns persistence, incident correlation and asynchronous results.
+native bool BSAccess_RequestLilacBan(int client, int cheat, int minutes, const char[] reason);

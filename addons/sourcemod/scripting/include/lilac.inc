@@ -77,25 +77,14 @@ forward void lilac_cheater_detected(int client, int cheat);
 forward void lilac_aim_tracking_started(int client, int cheat, int accountId, const char[] steamId64);
 
 /**
- * Reports the tracking-start identity without changing the original forward ABI.
- * @param client        Client index at start time.
- * @param cheat         CHEAT_AIMBOT or CHEAT_AIMLOCK.
- * @param accountId     Stable Steam account ID.
- * @param steamId64     Stable SteamID64 string.
- * @param incidentId    Stable UUID v4 for this tracking window.
- * @noreturn
- */
-forward void lilac_aim_tracking_incident_started(int client, int cheat, int accountId, const char[] steamId64, const char[] incidentId);
-
-/**
  * Called once when an active Aimbot/Aimlock tracking window ends.
  * Expired means Lilac has no remaining normalized detections in its ten-minute
  * counters; Disconnected and PluginUnload also discard the live counter state.
  * BanRequested is emitted only when Lilac proceeds to ask a ban provider.
  *
  * Ordering: for a ban, lilac_cheater_banned runs first; this forward runs next;
- * lilac_cheater_ban_request_queued follows only if BanSystem accepts its async
- * request. The queued forward does not confirm persisted sanctions.
+ * BanSystem admission is requested before the tracking-end notification.
+ * Detector notifications never confirm durable admission or application.
  *
  * @param client        Current client index, or 0 when the account is offline.
  * @param cheat         CHEAT_AIMBOT or CHEAT_AIMLOCK.
@@ -115,34 +104,6 @@ forward void lilac_aim_tracking_ended(int client, int cheat, int accountId, cons
  * @noreturn
  */
 forward void lilac_cheater_banned(int client, int cheat);
-
-/**
- * Reports the exact Lilac automatic-ban decision with the UUID captured when
- * its tracking window started. This is not a persisted sanction confirmation.
- * The UUID is also passed to BanSystem Access; central linkage requires the
- * atomic sanction commit, target and node/server to match.
- *
- * @param client        Client index of the player.
- * @param cheat         Cheat type (CHEAT_AIMBOT or CHEAT_AIMLOCK).
- * @param accountId     Stable Steam account ID targeted by the ban.
- * @param steamId64     Stable SteamID64 string.
- * @param incidentId    UUID v4 used by the private detection and sanction.
- * @noreturn
- */
-forward void lilac_cheater_ban_incident(int client, int cheat, int accountId, const char[] steamId64, const char[] incidentId);
-
-/**
- * Called after BanSystem Access accepts one asynchronous ban request.
- * This reports queue acceptance only. Observe BSCore_OnSanctionCreateCompleted
- * and require success plus a sanction ID before treating the ban as persisted.
- *
- * @param client        Client index at request time.
- * @param cheat         Cheat type.
- * @param accountId     Stable Steam account ID targeted by the request.
- * @param requestId     Local Core request ID for completion correlation.
- * @noreturn
- */
-forward void lilac_cheater_ban_request_queued(int client, int cheat, int accountId, int requestId);
 
 /**
  * Allows external plugins to interrupt a cheat detection before Lilac continues.
@@ -195,9 +156,6 @@ native int lilac_GetAimTrackingCount();
  */
 native bool lilac_GetAimTrackingInfo(int index, int &client, int &cheat, int &accountId, char[] steamId64, int maxlen);
 
-/** Reads the stable incident UUID for an active tracking row. */
-native bool lilac_GetAimTrackingIncidentInfo(int index, char[] incidentId, int maxlen);
-
 // Instead of having to implant this into each plugin who want to use forwards
 stock void GetCheatName(int type, char[] buffer, int maxlen)
 {
@@ -233,5 +191,4 @@ public void __pl_lilac_SetNTVOptional()
     MarkNativeAsOptional("lilac_IsAimTracking");
     MarkNativeAsOptional("lilac_GetAimTrackingCount");
     MarkNativeAsOptional("lilac_GetAimTrackingInfo");
-    MarkNativeAsOptional("lilac_GetAimTrackingIncidentInfo");
 }
