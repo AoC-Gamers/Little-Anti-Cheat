@@ -20,6 +20,10 @@ void lilac_config_setup()
 {
 	ConVar tcvar;
 
+	g_cvStartupPrint = new Convar("lilac_startup_print", "0",
+		"Print automatic startup banner and ban status. 0 = silent, 1 = print.",
+		FCVAR_PROTECTED, true, 0.0, true, 1.0);
+
 	hcvar[CVAR_ENABLE] = new Convar("lilac_enable", "1",
 		"Enable Little Anti-Cheat.",
 		FCVAR_PROTECTED, true, 0.0, true, 1.0);
@@ -195,8 +199,11 @@ public void OnConfigsExecuted()
 {
 	static bool run_status_ban = true;
 
-	if (run_status_ban)
+	// Config has now run, so a persisted 0 also silences the first load.
+	if (run_status_ban && g_cvStartupPrint.BoolValue) {
+		PrintToServer("[Little Anti-Cheat %s] Successfully loaded!", PLUGIN_VERSION);
 		lilac_ban_status(0);
+	}
 
 	/* We need to call this here, in case of a plugin reload. */
 	lilac_bhop_set_preset();

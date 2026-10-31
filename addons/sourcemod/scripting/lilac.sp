@@ -193,8 +193,6 @@ public void OnAllPluginsLoaded()
 	materialadmin_exist = LibraryExists("materialadmin");
 	bansystem_exist = LibraryExists("bansystem_access");
 
-	/* Startup message. */
-	PrintToServer("[Little Anti-Cheat %s] Successfully loaded!", PLUGIN_VERSION);
 }
 
 public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int err_max)

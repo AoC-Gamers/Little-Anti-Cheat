@@ -118,11 +118,12 @@
 #define PLUGIN_NAME      "[Lilac] Little Anti-Cheat"
 #define PLUGIN_AUTHOR    "J_Tanzanite"
 #define PLUGIN_DESC      "An opensource Anti-Cheat"
-#define PLUGIN_VERSION   "3.0.0"
+#define PLUGIN_VERSION   "3.0.1"
 #define BANSYSTEM_CONSOLE_NAME "Lilac Anti-Cheat"
 #define PLUGIN_URL       "https://github.com/J-Tanzanite/Little-Anti-Cheat"
 
 /* Convars. */
+Convar g_cvStartupPrint;
 Convar hcvar[CVAR_MAX]; /* ConVar = built in SourceMod  |  Convar = kidfearless's convar_class */
 int icvar[CVAR_MAX];
 int sv_cheats = 0;

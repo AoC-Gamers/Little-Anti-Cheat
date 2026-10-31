@@ -155,3 +155,17 @@ Por eso sus castigos suelen ser más acotados que los de un cheat tradicional. T
 No exactamente como castigo permanente.
 
 El módulo opcional de ping alto aplica una expulsión temporal corta, para evitar que un jugador con latencia extrema vuelva a entrar de inmediato tras un simple kick. Está pensado más como una medida operativa que como una detección de cheat.
+
+## Mensajes de inicio
+
+`lilac_startup_print` controla el banner de carga y el informe automático de
+proveedores/bans: `0` los silencia (predeterminado), `1` imprime. Se evalúa después
+de cargar la configuración y una sola vez por instancia del plugin. Guardar
+`lilac_startup_print 0` en el `lilac_config.cfg` activo: se conserva la ubicación
+legacy `cfg/lilac_config.cfg` si existe; en caso contrario se usa
+`cfg/sourcemod/lilac_config.cfg`.
+
+El comando explícito `lilac_ban_status` continúa mostrando el informe aunque el
+inicio esté silenciado. La opción no cambia detecciones, bans, archivos de log,
+la bienvenida `lilac_welcome` ni avisos operativos/errores. Cambiarla después del
+inicio no vuelve a imprimir el banner en cada mapa.
