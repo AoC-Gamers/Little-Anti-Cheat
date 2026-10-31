@@ -1,16 +1,14 @@
 # Changelog
 
-## 1.9.0
-
-- Cada tracking Aimbot/Aimlock recibe un UUID estable, expuesto en los forwards y el snapshot público de tracks.
-- El native tracked de BanSystem Access recibe opcionalmente el UUID de tracking en la petición original de sanción.
-- Se añade un forward posterior a la aceptación de Access con el ID local de solicitud.
-- El forward previo de ban queda documentado como intención, no como confirmación.
-
 ## 1.8.1
 
 - Identificación explícita de `Lilac Anti-Cheat` como emisor de consola al crear sanciones de acceso mediante BanSystem.
-- Conservación del fallback existente hacia Material-Admin, SourceBans y BaseBans cuando BanSystem no acepta la solicitud.
+- Solicitudes de sanción mediante `BSAccess_RequestLilacBan`; BanSystem conserva la responsabilidad de persistir, correlacionar y aplicar la sanción. Si está seleccionado, su indisponibilidad no desvía la solicitud hacia otros proveedores.
+- Conservación de Material-Admin, SourceBans y BaseBans cuando BanSystem no está seleccionado.
+- Exposición del inicio, cierre y snapshot de seguimientos Aimbot/Aimlock mediante `lilac.inc`, identificados por AccountID y SteamID64; las claves de evidencia pertenecen a BanSystem.
+- Conservación del seguimiento entre capítulos de L4D2 y cierre por vencimiento, desconexión, solicitud de ban o descarga del plugin, con protección frente a reutilización de slots.
+- Aclaración de que `lilac_cheater_banned` y el cierre por solicitud de ban expresan intención, sin confirmar aceptación ni persistencia de la sanción.
+- Incorporación de `lilac_startup_print`, con valor predeterminado `0`, para controlar el banner y el informe automático de inicio; `lilac_ban_status` conserva su salida explícita.
 - Homologación del canal continuo: `develop` publica `channel/develop` y `main` publica `channel/latest`, manteniendo los artefactos de cada ejecución identificados por el SHA completo.
 
 ## 1.8.0
