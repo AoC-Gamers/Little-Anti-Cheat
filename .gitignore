@@ -4,7 +4,7 @@
 /build-windows
 /dist
 /deps
-/.tmp
+/tmp
 __pycache__/
 *.pyc
 *.log
