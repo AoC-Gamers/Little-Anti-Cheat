@@ -5,11 +5,6 @@ on:
     tags:
       - v*
   workflow_dispatch:
-    inputs:
-      sourcemod_version:
-        description: SourceMod version to download
-        required: false
-        default: "1.12"
 
 concurrency:
   group: release-${{ github.ref }}
@@ -19,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  SOURCEMOD_VERSION: ${{ inputs.sourcemod_version || '1.12' }}
+  SOURCEMOD_VERSION: ${{ vars.SOURCEMOD_VERSION }}
 
 jobs:
   prepare-release:
@@ -40,12 +35,12 @@ jobs:
 
       - name: Resolve release tag
         id: release
-        run: bash ./scripts/ci-resolve-release.sh "${GITHUB_REF_NAME}"
+        run: make --no-print-directory resolve-release
 
       - name: Ensure tag points to main history
         shell: bash
         run: |
-          git fetch origin main --depth=1
+          git fetch origin main
           if ! git merge-base --is-ancestor "$GITHUB_SHA" "origin/main"; then
             echo "Tag ${GITHUB_REF_NAME} does not point to a commit on main." >&2
             exit 1
@@ -57,6 +52,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate organization SourceMod version
+        shell: bash
+        run: |
+          if [[ ! "$SOURCEMOD_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Set the AoC-Gamers Actions variable SOURCEMOD_VERSION to a SourceMod branch such as 1.12."
+            exit 1
+          fi
+
       - name: Check out repository
         uses: actions/checkout@v6
 
@@ -69,8 +72,8 @@ jobs:
         id: cache
         uses: actions/cache/restore@v4
         with:
-          path: deps
-          key: ${{ runner.os }}-smx-deps-${{ env.SOURCEMOD_VERSION }}-${{ hashFiles('scripts/fetch-sourcemod.py', 'Makefile') }}
+          path: .deps/smx
+          key: ${{ runner.os }}-smx-deps-${{ env.SOURCEMOD_VERSION }}-${{ hashFiles('scripts/deps/fetch-sourcemod.py', 'Makefile') }}
 
       - name: Resolve SourceMod dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -80,7 +83,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: deps
+          path: .deps/smx
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
   build-smx:
@@ -100,12 +103,12 @@ jobs:
       - name: Restore SourceMod dependency cache
         uses: actions/cache/restore@v4
         with:
-          path: deps
-          key: ${{ runner.os }}-smx-deps-${{ env.SOURCEMOD_VERSION }}-${{ hashFiles('scripts/fetch-sourcemod.py', 'Makefile') }}
+          path: .deps/smx
+          key: ${{ runner.os }}-smx-deps-${{ env.SOURCEMOD_VERSION }}-${{ hashFiles('scripts/deps/fetch-sourcemod.py', 'Makefile') }}
           fail-on-cache-miss: true
 
       - name: Build SourceMod plugin
-        run: make build-smx PYTHON=python3 SPCOMP="deps/sourcemod-linux/addons/sourcemod/scripting/spcomp"
+        run: make build-smx PYTHON=python3
 
       - name: Upload SourceMod build tree
         uses: actions/upload-artifact@v6
@@ -119,7 +122,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: smx-compile-log
-          path: deps/build-smx-compile.log
+          path: .build/build-smx-compile.log
           if-no-files-found: error
           retention-days: 1
 
@@ -149,20 +152,8 @@ jobs:
           name: smx-build
           path: .build/smx
 
-      - name: Download SourceMod compile log
-        uses: actions/download-artifact@v6
-        with:
-          name: smx-compile-log
-          path: deps
-
       - name: Package SourceMod build tree
         run: make package-smx PYTHON=python3
-
-      - name: Stage SourceMod artifact
-        run: python3 ./scripts/stage-artifact.py . ./.build/package-smx ./deps/build-smx-compile.log
-
-      - name: Validate SourceMod artifact
-        run: bash ./scripts/ci-validate-artifact.sh
 
       - name: Create release archive
         env:
@@ -182,7 +173,7 @@ jobs:
           RELEASE_VERSION: ${{ needs.prepare-release.outputs.version }}
         run: |
           mkdir -p dist/release
-          bash ./scripts/ci-extract-changelog-release-notes.sh "$RELEASE_VERSION" dist/release/release-notes.md
+          make release-notes
 
       - name: Create GitHub release
         env:

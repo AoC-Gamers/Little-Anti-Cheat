@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Desarrollo
+
+- Make y GitHub Actions comparten el flujo de compilación y validación del ZIP instalable.
+
 ## 1.8.1
 
 - Identificación explícita de `Lilac Anti-Cheat` como emisor de consola al crear sanciones de acceso mediante BanSystem.

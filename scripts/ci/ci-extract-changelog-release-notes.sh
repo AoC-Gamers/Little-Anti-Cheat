@@ -4,7 +4,7 @@ set -euo pipefail
 
 VERSION="${1:-}"
 OUTPUT_PATH="${2:-}"
-CHANGELOG_PATH="${3:-Changelog}"
+CHANGELOG_PATH="${3:-CHANGELOG.md}"
 
 if [[ -z "$VERSION" || -z "$OUTPUT_PATH" ]]; then
 	echo "Usage: $0 <version> <output-path> [changelog-path]" >&2
