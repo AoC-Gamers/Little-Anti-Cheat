@@ -121,8 +121,6 @@ jobs:
   package:
     needs: build-smx
     runs-on: ubuntu-24.04
-    permissions:
-      contents: write
     outputs:
       basename: ${{ steps.meta.outputs.basename }}
       channel_basename: ${{ steps.meta.outputs.channel_basename }}
