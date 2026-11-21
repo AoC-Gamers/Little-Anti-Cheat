@@ -126,6 +126,6 @@
 
 	"chat_macro_detected"
 	{
-		"es"		"Se detectó que {1} usó la macro {2}."
+		"es"		"{1} está acumulando demasiadas detecciones de macro {2}."
 	}
 }

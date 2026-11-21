@@ -126,6 +126,6 @@
 
 	"chat_macro_detected"
 	{
-		"fi"		"Pelaajan {1} havaittiin käyttävän makroa {2}."
+		"fi"		"Pelaajalle {1} kertyy liian monta havaintoa makrosta {2}."
 	}
 }

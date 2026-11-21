@@ -121,6 +121,6 @@
 
 	"chat_macro_detected"
 	{
-		"no"		"Det ble oppdaget at {1} brukte makroen {2}."
+		"no"		"{1} får for mange registreringer av makroen {2}."
 	}
 }

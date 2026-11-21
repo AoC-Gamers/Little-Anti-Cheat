@@ -80,6 +80,6 @@
 
 	"chat_macro_detected"
 	{
-		"cze"		"U hráče {1} bylo zjištěno použití makra {2}."
+		"cze"		"U hráče {1} se hromadí příliš mnoho detekcí makra {2}."
 	}
 }

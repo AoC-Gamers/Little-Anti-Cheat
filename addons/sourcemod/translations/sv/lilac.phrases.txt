@@ -123,6 +123,6 @@
 
 	"chat_macro_detected"
 	{
-		"sv"		"Det upptäcktes att {1} använde makrot {2}."
+		"sv"		"{1} har för många registrerade upptäckter av makrot {2}."
 	}
 }

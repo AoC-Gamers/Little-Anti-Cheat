@@ -87,6 +87,6 @@
 
 	"chat_macro_detected"
 	{
-		"pl"		"Wykryto, że gracz {1} użył makra {2}."
+		"pl"		"U gracza {1} odnotowano zbyt wiele wykryć makra {2}."
 	}
 }

@@ -80,6 +80,6 @@
 
         "chat_macro_detected"
         {
-                "de"            "Bei {1} wurde die Verwendung des Makros {2} erkannt."
+                "de"            "Bei {1} häufen sich zu viele Erkennungen des Makros {2}."
         }
 }

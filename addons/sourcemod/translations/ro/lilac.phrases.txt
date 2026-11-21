@@ -126,6 +126,6 @@
 
 	"chat_macro_detected"
 	{
-		"ro"		"S-a detectat că {1} a folosit macrocomanda {2}."
+		"ro"		"{1} acumulează prea multe detecții ale macrocomenzii {2}."
 	}
 }

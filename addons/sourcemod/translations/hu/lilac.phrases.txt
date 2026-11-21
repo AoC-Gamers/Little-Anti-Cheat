@@ -90,6 +90,6 @@
 
 	"chat_macro_detected"
 	{
-		"hu"		"A rendszer észlelte, hogy {1} a(z) {2} makrót használta."
+		"hu"		"{1} esetében túl sok észlelés gyűlik össze a(z) {2} makró miatt."
 	}
 }

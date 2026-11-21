@@ -90,6 +90,6 @@
 
 	"chat_macro_detected"
 	{
-		"fr"		"Le joueur {1} a été détecté en train d’utiliser la macro {2}."
+		"fr"		"{1} accumule trop de détections liées à la macro {2}."
 	}
 }

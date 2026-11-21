@@ -126,6 +126,6 @@
 
 	"chat_macro_detected"
 	{
-		"da"		"{1} blev opdaget i at bruge makroen {2}."
+		"da"		"{1} har for mange registreringer af makroen {2}."
 	}
 }

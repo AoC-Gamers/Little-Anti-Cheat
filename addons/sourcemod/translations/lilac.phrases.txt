@@ -134,6 +134,6 @@
 	"chat_macro_detected"
 	{
 		"#format"	"{1:N},{2:s}"
-		"en"		"{1} was detected using the {2} macro."
+		"en"		"{1} is accumulating too many detections for the {2} macro."
 	}
 }

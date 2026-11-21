@@ -90,6 +90,6 @@
 
 	"chat_macro_detected"
 	{
-		"nl"		"Er is vastgesteld dat {1} de macro {2} gebruikte."
+		"nl"		"Bij {1} wordt de macro {2} te vaak gedetecteerd."
 	}
 }

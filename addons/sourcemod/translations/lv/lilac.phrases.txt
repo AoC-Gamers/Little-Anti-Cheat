@@ -126,6 +126,6 @@
 
 	"chat_macro_detected"
 	{
-		"lv"		"Konstatēts, ka spēlētājs {1} izmantoja makro {2}."
+		"lv"		"Spēlētājam {1} ir pārāk daudz makro {2} konstatēšanas gadījumu."
 	}
 }

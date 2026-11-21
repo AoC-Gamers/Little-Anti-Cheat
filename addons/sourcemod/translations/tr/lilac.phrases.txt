@@ -126,6 +126,6 @@
 
 	"chat_macro_detected"
 	{
-		"tr"		"{1} adlı oyuncunun {2} makrosunu kullandığı tespit edildi."
+		"tr"		"{1} adlı oyuncu için çok fazla {2} makrosu tespit ediliyor."
 	}
 }
