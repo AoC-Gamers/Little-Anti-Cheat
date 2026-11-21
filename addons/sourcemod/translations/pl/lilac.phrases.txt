@@ -64,4 +64,29 @@
 	{
 		"pl"		"Wykryto Nieskończony Zagłuszacz"
 	}
+
+	"admin_chat_warning_generic"
+	{
+		"pl"		"Podejrzewa się, że {1} używa „{2}” (Wykrycia: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"pl"		"Twój ping wrócił do normy. Możesz wrócić do drużyny."
+	}
+
+	"chat_ping_warning"
+	{
+		"pl"		"Jeśli twój ping pozostanie za wysoki, zostaniesz wyrzucony za {1} s ({2} ms / maks. {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"pl"		"Używanie makr jest zabronione."
+	}
+
+	"chat_macro_detected"
+	{
+		"pl"		"Wykryto, że gracz {1} użył makra {2}."
+	}
 }

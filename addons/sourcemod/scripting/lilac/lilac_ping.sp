@@ -52,7 +52,7 @@ public Action timer_check_ping(Handle timer)
 			if (ping_high[i] < ping_warn[i] - 2 && ping_warn[i] > 0) {
 
 				ping_warn[i] = 0;
-				PrintToChat(i, "[Lilac] Your ping appears to be fine again, it is safe to rejoin a team and play.");
+				CPrintToChat(i, "%t %t", "Prefix", "chat_ping_recovered");
 			}
 
 			continue;
@@ -64,7 +64,7 @@ public Action timer_check_ping(Handle timer)
 
 			ping_warn[i] = ping_high[i];
 
-			PrintToChat(i, "[Lilac] WARNING: You will be kicked in %d seconds if your ping stays too high! (%.0f / %d max)",
+			CPrintToChat(i, "%t %t", "Prefix", "chat_ping_warning",
 				100 - (ping_high[i] * 5),
 				ping, icvar[CVAR_MAX_PING]);
 		}

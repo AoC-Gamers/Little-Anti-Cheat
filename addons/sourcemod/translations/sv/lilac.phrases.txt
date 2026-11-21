@@ -2,7 +2,7 @@
 {
 	"welcome_msg"
 	{
-		"se"		"Denna server är säkrad av Little Anti-Cheat {1}"
+		"sv"		"Denna server är säkrad av Little Anti-Cheat {1}"
 	}
 
 	"kick_query_failure"
@@ -83,12 +83,12 @@
 
 	"chat_invalid_characters"
 	{
-		"se" 		"Chatt meddelande blockerad, ogiltiga karaktärer upptäckt."
+		"sv" 		"Chatt meddelande blockerad, ogiltiga karaktärer upptäckt."
 	}
 
 	"chat_wide_char_spam"
 	{
-		"se"		"Chatt meddelande blockerad, bred-karaktär spam upptäckt."
+		"sv"		"Chatt meddelande blockerad, bred-karaktär spam upptäckt."
 	}
 
 	"kick_bad_name"
@@ -99,5 +99,30 @@
 	"ban_name_newline"
 	{
 		"se"		"Namn-radbrytningar Upptäckt"
+	}
+
+	"admin_chat_warning_generic"
+	{
+		"sv"		"{1} misstänks använda '{2}' (Antal upptäckter: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"sv"		"Din ping är normal igen. Du kan gå med i ett lag igen."
+	}
+
+	"chat_ping_warning"
+	{
+		"sv"		"Om din ping förblir för hög blir du utkastad om {1} sekunder ({2} ms / max {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"sv"		"Makron är inte tillåtna."
+	}
+
+	"chat_macro_detected"
+	{
+		"sv"		"Det upptäcktes att {1} använde makrot {2}."
 	}
 }

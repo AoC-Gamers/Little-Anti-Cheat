@@ -67,4 +67,29 @@
 	{
 		"fr" 		"Spam deGénérateur de bruit infini détecté"
 	}
+
+	"admin_chat_warning_generic"
+	{
+		"fr"		"{1} est soupçonné d’utiliser « {2} » (Détections : {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"fr"		"Ton ping est revenu à la normale. Tu peux rejoindre une équipe."
+	}
+
+	"chat_ping_warning"
+	{
+		"fr"		"Tu seras expulsé dans {1} secondes si ton ping reste trop élevé ({2} ms / {3} ms max.)."
+	}
+
+	"chat_macro_warning"
+	{
+		"fr"		"Les macros sont interdites."
+	}
+
+	"chat_macro_detected"
+	{
+		"fr"		"Le joueur {1} a été détecté en train d’utiliser la macro {2}."
+	}
 }

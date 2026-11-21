@@ -103,4 +103,29 @@
 	{
 		"da"		"Navn Newlines Opdaget"
 	}
+
+	"admin_chat_warning_generic"
+	{
+		"da"		"{1} mistænkes for at bruge '{2}' (Antal registreringer: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"da"		"Din ping er normal igen. Du kan slutte dig til et hold igen."
+	}
+
+	"chat_ping_warning"
+	{
+		"da"		"Du bliver smidt ud om {1} sekunder, hvis din ping forbliver for høj ({2} ms / maks. {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"da"		"Makroer er ikke tilladt."
+	}
+
+	"chat_macro_detected"
+	{
+		"da"		"{1} blev opdaget i at bruge makroen {2}."
+	}
 }

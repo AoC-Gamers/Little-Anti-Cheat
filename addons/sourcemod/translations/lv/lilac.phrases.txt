@@ -106,7 +106,26 @@
 
 	"admin_chat_warning_generic"
 	{
-		"#format"	"{1:s},{2:s},{3:d}"
 		"lv"		"{1} Tiek turēts aizdomās par '{2}' (Detections: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"lv"		"Tavs ping atkal ir normāls. Vari atgriezties komandā."
+	}
+
+	"chat_ping_warning"
+	{
+		"lv"		"Ja tavs ping joprojām būs pārāk augsts, pēc {1} sekundēm tiksi izmests ({2} ms / maks. {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"lv"		"Makro lietošana nav atļauta."
+	}
+
+	"chat_macro_detected"
+	{
+		"lv"		"Konstatēts, ka spēlētājs {1} izmantoja makro {2}."
 	}
 }

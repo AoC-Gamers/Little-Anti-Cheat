@@ -1,5 +1,10 @@
 "Phrases"
 {
+	"Prefix"
+	{
+		"en"		"[{olive}Lilac{default}]"
+	}
+
 	"welcome_msg"
 	{
 		"#format"	"{1:s}"
@@ -108,5 +113,27 @@
 	{
 		"#format"	"{1:s},{2:s},{3:d}"
 		"en"		"{1} is suspected of using '{2}' (Detections: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"en"		"Your ping is back to normal. You can rejoin a team."
+	}
+
+	"chat_ping_warning"
+	{
+		"#format"	"{1:d},{2:.0f},{3:d}"
+		"en"		"You will be kicked in {1} seconds if your ping stays too high ({2} ms / {3} ms max)."
+	}
+
+	"chat_macro_warning"
+	{
+		"en"		"Macros are not allowed."
+	}
+
+	"chat_macro_detected"
+	{
+		"#format"	"{1:N},{2:s}"
+		"en"		"{1} was detected using the {2} macro."
 	}
 }

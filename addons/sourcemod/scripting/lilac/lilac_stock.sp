@@ -56,9 +56,8 @@ void lilac_warn_admins(int client, int cheat, int detections)
 		strcopy(name, sizeof(name), "[NAME_ERROR]");
 	
 	for (int i = 0; i < n; i++)
-		PrintToChat(admins[i],
-			"[Lilac] %T", "admin_chat_warning_generic",
-			admins[i], name, type, detections);
+		CPrintToChat(admins[i], "%t %t",
+			"Prefix", "admin_chat_warning_generic", name, type, detections);
 }
 
 /* Useless Todo: I should update this soon... But I won't :P */

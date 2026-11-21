@@ -33,17 +33,15 @@ Originalmente fue desarrollado para servidores privados. Más adelante fue publi
 - Filtro de caracteres inválidos en chat.
   - Incluye correcciones para abusos relacionados con limpieza de chat.
 
-## Integración con BanSystem
+## Integración con proveedores de sanciones
 
-Cuando `lilac_bansystem` está habilitado, Lilac solicita el ban mediante
-`BSAccess_RequestLilacBan`, enviando sólo jugador, detección, minutos y motivo.
-El bool retornado sólo indica admisión en memoria.
-
-BanSystem aplica permisos, inmunidad y validaciones del caller real `lilac.smx`.
-Core aplica sólo tras confirmar durabilidad. Si SAN está apagado o falta el
-proveedor/ABI, la integración falla cerrado: Lilac no arma un kick diferido ni
-prueba otro proveedor. Con `lilac_bansystem=0`, los otros proveedores conservan
-su selección propia. Este corte no cambia flags ni instala binarios.
+La integración opcional de solicitudes envía al proveedor el jugador, el
+tipo de detección, la duración y el motivo. El proveedor valida los permisos
+y la inmunidad, y aplica la sanción después de guardarla. La admisión de una
+solicitud solo confirma que el proveedor la recibió. Si el proveedor
+seleccionado está indisponible o es incompatible, la solicitud falla sin
+recurrir a otro proveedor ni programar una expulsión diferida. Con esa
+integración deshabilitada, Lilac conserva la selección de los demás proveedores.
 
 ### Seguimiento de Aimbot y Aimlock
 
@@ -51,8 +49,8 @@ su selección propia. Este corte no cambia flags ni instala binarios.
 normalizada, incluso si no llega a sospecha ni a ban. Aimbot/Aimlock notifican
 antes de actualizar su contador; los consumidores no deben inferir ese contador
 desde el forward. Aimlock normaliza dos señales cercanas antes de emitirlo.
-BanSystem Demo puede conservar cada evento como metadata privada, con identidad
-y tick propios, sin cambiar avisos o umbrales de Lilac.
+Los consumidores pueden registrar cada evento con su identidad y tick,
+sin cambiar los avisos ni los umbrales de Lilac.
 
 El include público `lilac.inc` expone `lilac_aim_tracking_started` y
 `lilac_aim_tracking_ended`. Lilac inicia un seguimiento al alcanzar dos
@@ -60,16 +58,14 @@ detecciones normalizadas del mismo jugador y cheat dentro de sus ventanas de
 sospecha de diez minutos. La detección que cruza el umbral primero dispara
 `lilac_cheater_detected` y luego `lilac_aim_tracking_started`. La identidad del
 seguimiento usa Steam account ID y SteamID64; el índice `client` solo identifica
-el slot mientras está conectado. BanSystem Demo consume esos eventos y mantiene
-sus propias claves de evidencia; no entrega esas claves a Lilac.
+el slot mientras está conectado.
 
 El cierre informa uno de cuatro motivos: `Expired`, `Disconnected`,
 `BanRequested` o `PluginUnload`. En un ban, el orden es
-`lilac_cheater_banned`, solicitud a Access si BanSystem está seleccionado y
-`lilac_aim_tracking_ended(BanRequested)`. Así BanSystem puede consultar su propio
-contexto mientras el seguimiento sigue activo. Ningún forward confirma que una
-sanción se haya guardado o aplicado. Sin BanSystem se conserva la selección de
-los demás proveedores, sin incorporar lógica de correlación a Lilac.
+`lilac_cheater_banned`, solicitud al proveedor si esa integración está
+seleccionada y `lilac_aim_tracking_ended(BanRequested)`. El proveedor puede
+consultar el seguimiento mientras sigue activo. La confirmación de que la
+sanción se guardó o aplicó corresponde al proveedor.
 
 Los vencimientos usan timers individuales vinculados a account ID, cheat,
 generación del registro e ID de detección; un cambio de mapa o de slot no los

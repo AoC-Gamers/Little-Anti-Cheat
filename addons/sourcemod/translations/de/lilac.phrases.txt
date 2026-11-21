@@ -57,4 +57,29 @@
         {
                 "de"            "Aimlock entdeckt"
         }
+
+        "admin_chat_warning_generic"
+        {
+                "de"            "{1} steht im Verdacht, '{2}' zu verwenden (Erkennungen: {3})"
+        }
+
+        "chat_ping_recovered"
+        {
+                "de"            "Dein Ping ist wieder normal. Du kannst erneut einem Team beitreten."
+        }
+
+        "chat_ping_warning"
+        {
+                "de"            "Wenn dein Ping zu hoch bleibt, wirst du in {1} Sekunden gekickt ({2} ms / max. {3} ms)."
+        }
+
+        "chat_macro_warning"
+        {
+                "de"            "Makros sind nicht erlaubt."
+        }
+
+        "chat_macro_detected"
+        {
+                "de"            "Bei {1} wurde die Verwendung des Makros {2} erkannt."
+        }
 }

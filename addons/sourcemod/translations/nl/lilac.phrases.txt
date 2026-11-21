@@ -67,4 +67,29 @@
 	{
 		"nl"		"Oneindige noisemaker gedetecteerd"
 	}
+
+	"admin_chat_warning_generic"
+	{
+		"nl"		"{1} wordt verdacht van het gebruik van '{2}' (Detecties: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"nl"		"Je ping is weer normaal. Je kunt terugkeren naar een team."
+	}
+
+	"chat_ping_warning"
+	{
+		"nl"		"Je wordt over {1} seconden verwijderd als je ping te hoog blijft ({2} ms / max. {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"nl"		"Macro’s zijn niet toegestaan."
+	}
+
+	"chat_macro_detected"
+	{
+		"nl"		"Er is vastgesteld dat {1} de macro {2} gebruikte."
+	}
 }

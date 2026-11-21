@@ -103,4 +103,29 @@
 	{
 		"tr"		"Adınızda Yeni Satır Algılandı"
 	}
+
+	"admin_chat_warning_generic"
+	{
+		"tr"		"{1} adlı oyuncunun '{2}' kullandığından şüpheleniliyor (Tespit sayısı: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"tr"		"Ping değerin normale döndü. Bir takıma yeniden katılabilirsin."
+	}
+
+	"chat_ping_warning"
+	{
+		"tr"		"Ping değerin yüksek kalırsa {1} saniye sonra sunucudan atılacaksın ({2} ms / en fazla {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"tr"		"Makro kullanımına izin verilmez."
+	}
+
+	"chat_macro_detected"
+	{
+		"tr"		"{1} adlı oyuncunun {2} makrosunu kullandığı tespit edildi."
+	}
 }

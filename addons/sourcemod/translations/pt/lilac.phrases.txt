@@ -104,4 +104,24 @@
 	{
 		"pt"		"{1} possivelmente está usando \"{2}\". (Nº de detecções: {3}.)"
 	}
+
+	"chat_ping_recovered"
+	{
+		"pt"		"Seu ping voltou ao normal. Você pode voltar a uma equipe."
+	}
+
+	"chat_ping_warning"
+	{
+		"pt"		"Você será expulso em {1} segundos se seu ping continuar alto ({2} ms / máx. {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"pt"		"O uso de macros não é permitido."
+	}
+
+	"chat_macro_detected"
+	{
+		"pt"		"Foi detectado que {1} usou a macro {2}."
+	}
 }

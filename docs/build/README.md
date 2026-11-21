@@ -44,6 +44,10 @@ El build utiliza los includes de SourceMod y los que están versionados en
 `addons/sourcemod/scripting/include/`. Consulta [Integraciones de Little Anti-Cheat](../detections/README.md)
 para los proveedores del juego y los requisitos de ejecución.
 
+Los mensajes de chat usan `colors.inc` 1.3.2, de exvel con ediciones de
+Popoklopsi, Powerlord y Bara. El include está disponible en el árbol de
+fuentes para compilar el plugin.
+
 ## Pruebas
 
 Usa `make test-ci` para la regresión del banner de inicio. `make build-smx` ejecuta la misma prueba mediante `check-startup-print`.

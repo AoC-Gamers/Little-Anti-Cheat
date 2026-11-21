@@ -47,7 +47,7 @@ public Action OnClientSayCommand(int client, const char[] command, const char[] 
 	 * clear the chat before banning, otherwise people
 	 * would be confused and think the ban was an error. */
 	if (!(is_string_valid(sArgs, flags)) && !(flags & STRFLAG_NEWLINE)) {
-		PrintToChat(client, "[Lilac] %T", "chat_invalid_characters", client);
+		CPrintToChat(client, "%t %t", "Prefix", "chat_invalid_characters");
 		return Plugin_Stop;
 	}
 	else if ((flags & STRFLAG_WIDE_CHAR_SPAM)) {
@@ -55,7 +55,7 @@ public Action OnClientSayCommand(int client, const char[] command, const char[] 
 		 * as explained by 3kliksphilip here: https://youtu.be/hP1N1YRitlM?t=94
 		 * this clears the chat and is annoying.
 		 * Block this exploit. */
-		PrintToChat(client, "[Lilac] %T", "chat_wide_char_spam", client);
+		CPrintToChat(client, "%t %t", "Prefix", "chat_wide_char_spam");
 		return Plugin_Stop;
 	}
 

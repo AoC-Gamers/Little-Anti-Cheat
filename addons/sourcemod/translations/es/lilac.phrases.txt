@@ -103,4 +103,29 @@
 	{
 		"es"		"Detectado Newlines en el nombre"
 	}
+
+	"admin_chat_warning_generic"
+	{
+		"es"		"Se sospecha que {1} usa '{2}' (Detecciones: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"es"		"Tu ping volvió a la normalidad. Puedes volver a un equipo."
+	}
+
+	"chat_ping_warning"
+	{
+		"es"		"Te expulsaremos en {1} segundos si tu ping sigue alto ({2} ms / {3} ms máx.)."
+	}
+
+	"chat_macro_warning"
+	{
+		"es"		"No se permite usar macros."
+	}
+
+	"chat_macro_detected"
+	{
+		"es"		"Se detectó que {1} usó la macro {2}."
+	}
 }

@@ -96,6 +96,7 @@ static int get_macro_input(int macro_type)
 static void lilac_detected_macro(int client, int type)
 {
 	char string[20];
+	char macro_name[sizeof(string)];
 
 	/* Clear history, prevents overlap. */
 	lilac_macro_reset_client_history(client, type);
@@ -118,6 +119,7 @@ static void lilac_detected_macro(int client, int type)
 	case MACRO_AUTOSHOOT: { strcopy(string, sizeof(string), "Auto-Shoot"); }
 	default: { return; } /* Invalid type. */
 	}
+	strcopy(macro_name, sizeof(macro_name), string);
 
 	char sDetails[512];
 	Format(sDetails, sizeof(sDetails), "Macro %s (Detection: %d | Max presses: %d)", string, macro_detected[client][type], macro_max);
@@ -156,7 +158,7 @@ static void lilac_detected_macro(int client, int type)
 		switch (icvar[CVAR_MACRO_WARNING]) {
 		case 1: {
 			PrintCenterText(client, "[Little Anti-Cheat] Warning: Macro usage isn't allowed!");
-			PrintToChat(client, "[Little Anti-Cheat] Warning: Macro usage isn't allowed!");
+			CPrintToChat(client, "%t %t", "Prefix", "chat_macro_warning");
 		}
 		case 2: {
 			for (int i = 1; macro_detected[client][type] == 2 && i <= MaxClients; i++) {
@@ -166,15 +168,18 @@ static void lilac_detected_macro(int client, int type)
 				if (!is_player_admin(i))
 					continue;
 
-				PrintToChat(i, "[Little Anti-Cheat] %N was detected of using Macro %s.",
-					client, string);
+				CPrintToChat(i, "%t %t", "Prefix", "chat_macro_detected", client, macro_name);
 			}
 		}
 		case 3: {
 			/* Warn everyone once... */
-			if (macro_detected[client][type] == 2)
-				PrintToChatAll("[Little Anti-Cheat] %N was detected of using Macro %s.",
-					client, string);
+			if (macro_detected[client][type] == 2) {
+				/* The original broadcast targets every in-game client. */
+				for (int i = 1; i <= MaxClients; i++) {
+					if (IsClientInGame(i))
+						CPrintToChat(i, "%t %t", "Prefix", "chat_macro_detected", client, macro_name);
+				}
+			}
 		}
 		}
 	}

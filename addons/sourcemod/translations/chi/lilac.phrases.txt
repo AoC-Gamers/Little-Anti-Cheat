@@ -103,7 +103,26 @@
 
 	"admin_chat_warning_generic"
 	{
-		"#format"	"{1:s},{2:s},{3:d}"
 		"chi"		"{1} 可能使用了 '{2}' (检测次数: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"chi"		"你的延迟已恢复正常，可以重新加入队伍。"
+	}
+
+	"chat_ping_warning"
+	{
+		"chi"		"如果延迟仍然过高，你将在 {1} 秒后被踢出（{2} 毫秒 / 上限 {3} 毫秒）。"
+	}
+
+	"chat_macro_warning"
+	{
+		"chi"		"本服务器不允许使用宏。"
+	}
+
+	"chat_macro_detected"
+	{
+		"chi"		"检测到 {1} 使用了 {2} 宏。"
 	}
 }

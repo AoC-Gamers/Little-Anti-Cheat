@@ -8,10 +8,10 @@
 
 ## 1.8.1
 
-- Identificación explícita de `Lilac Anti-Cheat` como emisor de consola al crear sanciones de acceso mediante BanSystem.
-- Solicitudes de sanción mediante `BSAccess_RequestLilacBan`; BanSystem conserva la responsabilidad de persistir, correlacionar y aplicar la sanción. Si está seleccionado, su indisponibilidad no desvía la solicitud hacia otros proveedores.
-- Conservación de Material-Admin, SourceBans y BaseBans cuando BanSystem no está seleccionado.
-- Exposición del inicio, cierre y snapshot de seguimientos Aimbot/Aimlock mediante `lilac.inc`, identificados por AccountID y SteamID64; las claves de evidencia pertenecen a BanSystem.
+- Identificación de `Lilac Anti-Cheat` como emisor de consola en las solicitudes de sanción.
+- El proveedor seleccionado guarda, correlaciona y aplica las solicitudes. Si está indisponible, la solicitud falla sin pasar a otro proveedor.
+- Material-Admin, SourceBans y BaseBans siguen disponibles cuando la integración opcional de solicitudes está desactivada.
+- Exposición del inicio, cierre e instantánea de seguimientos Aimbot/Aimlock mediante `lilac.inc`, identificados por AccountID y SteamID64.
 - Conservación del seguimiento entre capítulos de L4D2 y cierre por vencimiento, desconexión, solicitud de ban o descarga del plugin, con protección frente a reutilización de slots.
 - Aclaración de que `lilac_cheater_banned` y el cierre por solicitud de ban expresan intención, sin confirmar aceptación ni persistencia de la sanción.
 - Incorporación de `lilac_startup_print`, con valor predeterminado `0`, para controlar el banner y el informe automático de inicio; `lilac_ban_status` conserva su salida explícita.
@@ -32,8 +32,7 @@
 - Implementación de CI para compilar el plugin de SourceMod en ramas `main` y `develop`.
 - Implementación de workflow de release para publicar artefactos versionados por tag.
 - Validación automática del artefacto para asegurar que incluya el binario, el include público y las traducciones necesarias.
-- Empaquetado automático de releases en `.zip` siguiendo el layout estándar del ecosistema AoC.
-- Normalización del proyecto para trabajar con la misma estructura usada en otros repositorios públicos del ecosistema.
+- Empaquetado automático de releases en `.zip` con la estructura instalable de SourceMod.
 - Corrección del guard de aimbot para evitar comprobaciones duplicadas por tick sobre el atacante.
 - Corrección de las consultas `QueryClientConVar` para asociar las respuestas al `userid` correcto y evitar aplicar resultados a un slot reciclado.
 - Eliminación completa del soporte a auto update mediante Updater.

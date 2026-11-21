@@ -67,4 +67,29 @@
 	{
 		"hu" 		"Infinite Noisemaker Detektálva."
 	}
+
+	"admin_chat_warning_generic"
+	{
+		"hu"		"{1} feltehetően a következőt használja: '{2}' (Észlelések: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"hu"		"A pinged ismét normális. Visszatérhetsz egy csapatba."
+	}
+
+	"chat_ping_warning"
+	{
+		"hu"		"Ha a pinged túl magas marad, {1} másodperc múlva ki leszel dobva ({2} ms / max. {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"hu"		"Makrók használata nem megengedett."
+	}
+
+	"chat_macro_detected"
+	{
+		"hu"		"A rendszer észlelte, hogy {1} a(z) {2} makrót használta."
+	}
 }

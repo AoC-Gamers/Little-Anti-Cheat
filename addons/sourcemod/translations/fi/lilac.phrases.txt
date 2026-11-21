@@ -103,4 +103,29 @@
 	{
 		"fi"		"Nimen Newlineja havaittu"
 	}
+
+	"admin_chat_warning_generic"
+	{
+		"fi"		"{1}:n epäillään käyttävän toimintoa '{2}' (Havaintoja: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"fi"		"Viiveesi on taas normaali. Voit liittyä takaisin joukkueeseen."
+	}
+
+	"chat_ping_warning"
+	{
+		"fi"		"Sinut poistetaan {1} sekunnin kuluttua, jos viive pysyy liian suurena ({2} ms / enintään {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"fi"		"Makrojen käyttö ei ole sallittua."
+	}
+
+	"chat_macro_detected"
+	{
+		"fi"		"Pelaajan {1} havaittiin käyttävän makroa {2}."
+	}
 }

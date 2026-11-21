@@ -106,7 +106,26 @@
 
 	"admin_chat_warning_generic"
 	{
-		"#format"	"{1:s},{2:s},{3:d}"
 		"ro"		"{1} este suspect de folosire  '{2}' (Detecții: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"ro"		"Pingul tău a revenit la normal. Te poți alătura din nou unei echipe."
+	}
+
+	"chat_ping_warning"
+	{
+		"ro"		"Vei fi dat afară în {1} secunde dacă pingul rămâne prea mare ({2} ms / max. {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"ro"		"Utilizarea macrocomenzilor nu este permisă."
+	}
+
+	"chat_macro_detected"
+	{
+		"ro"		"S-a detectat că {1} a folosit macrocomanda {2}."
 	}
 }

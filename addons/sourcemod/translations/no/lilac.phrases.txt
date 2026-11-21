@@ -101,7 +101,26 @@
 
 	"admin_chat_warning_generic"
 	{
-		"#format"	"{1:s},{2:s},{3:d}"
 		"no"		"{1} mistenkes for å bruke '{2}' (Oppdagelser: {3})"
+	}
+
+	"chat_ping_recovered"
+	{
+		"no"		"Pingen din er normal igjen. Du kan bli med på et lag igjen."
+	}
+
+	"chat_ping_warning"
+	{
+		"no"		"Du blir kastet ut om {1} sekunder hvis pingen fortsatt er for høy ({2} ms / maks. {3} ms)."
+	}
+
+	"chat_macro_warning"
+	{
+		"no"		"Makroer er ikke tillatt."
+	}
+
+	"chat_macro_detected"
+	{
+		"no"		"Det ble oppdaget at {1} brukte makroen {2}."
 	}
 }
